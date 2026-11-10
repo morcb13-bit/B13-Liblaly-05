@@ -1,0 +1,92 @@
+<title>円環は30面体の輪の切り口</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@600;800&family=Zen+Kaku+Gothic+New:wght@400;500&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* 一本の縦の流れ：題 → 動く図（斜め → 真横 → 切る → 真上） → 操作 → 説明 */
+:root{
+  --bg:#eceff4; --panel:#f8f9fb; --ink:#1b2333; --muted:#5d6779; --line:#cfd5df;
+  --c0:#b5442c; --c1:#e0ad2f; --c2:#3e7f50; --c3:#2b62a8; --c4:#ece6d6; --plane:#7a5aa8;
+  --f-disp:"Shippori Mincho","Hiragino Mincho ProN","Yu Mincho",serif;
+  --f-body:"Zen Kaku Gothic New","Hiragino Sans","Yu Gothic",system-ui,sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#0e131d;--panel:#151c29;--ink:#e3e8f1;--muted:#97a1b3;--line:#2a3446;--c0:#d9634a;--c1:#e8bd4a;--c2:#5cae78;--c3:#5f8fe0;--c4:#d8d2c2;--plane:#b08ce0;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0e131d;--panel:#151c29;--ink:#e3e8f1;--muted:#97a1b3;--line:#2a3446;--c0:#d9634a;--c1:#e8bd4a;--c2:#5cae78;--c3:#5f8fe0;--c4:#d8d2c2;--plane:#b08ce0;color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);line-height:1.75;margin:0;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 40px}
+.wrap{max-width:760px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+h1{font-family:var(--f-disp);font-weight:800;font-size:clamp(1.4rem,4vw,1.9rem);line-height:1.3;margin:0;text-wrap:balance}
+.stage{background:var(--panel);border:1px solid var(--line);border-radius:6px;overflow:hidden}
+canvas{display:block;width:100%;max-width:100%;aspect-ratio:1/1}
+.ctl{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center}
+button{font:inherit;font-size:.88rem;background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:4px;padding:6px 12px;cursor:pointer}
+button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+button:focus-visible{outline:2px solid var(--c3);outline-offset:2px}
+.text{max-width:65ch}
+.text h2{font-family:var(--f-disp);font-weight:600;font-size:1.12rem;margin:18px 0 4px}
+.text p{margin:6px 0}
+</style>
+<div class="wrap">
+<h1>円環は30面体の輪の切り口</h1>
+<div class="stage"><canvas id="cv" width="900" height="900" aria-label="ひし形30面体10個のジグザグの輪を真ん中の面で切ると、五角形10枚の円環になる図"></canvas></div>
+<div class="ctl">
+  <button id="play" aria-pressed="true">再生</button>
+  <button id="step">次の段</button>
+</div>
+<div class="text">
+<h2>何を見ているか</h2>
+<p>黄金のひし形30面体10個が、5回軸のまわりに輪になって並んでいます。高さは2種類で、隣どうしは必ず上下が入れ替わり、上の段に5個、下の段に5個のジグザグになります。隣どうしは面で接し、さらに同じ段の一つおきとも面で接しています。</p>
+<p>再生すると、真横から見てジグザグを確かめたあと、上の段と下の段のちょうど真ん中の面（紫）で切ります。切り口は10個とも正五角形で、隣どうしはちょうど1本の辺を共有します。最後に真上から見ると、五角形10枚の円環です。色は、前の本の最初の円環と同じ5色の並びです。</p>
+<p>真上から見た影では、10個の中心は同じ半径に並び、その半径は隣どうしの間隔のちょうど φ 倍です。</p>
+<h2>確かめ方</h2>
+<p>中心の位置は6次元の整数の組で持ち、高さ、距離、切り口の頂点はすべて a＋bφ の整数で判定しました。切る面を少しずらすと、正五角形は一つも出ません。小数にしたのは、画面に置くところだけです。</p>
+</div>
+</div>
+<script>
+const D={"faces":[[[[0,0],[0,2],[2,2]],[[2,0],[0,0],[2,2]],[[0,0],[0,-2],[2,2]],[[-2,0],[0,0],[2,2]]],[[[0,0],[0,2],[-2,-2]],[[2,0],[0,0],[-2,-2]],[[0,0],[0,-2],[-2,-2]],[[-2,0],[0,0],[-2,-2]]],[[[2,2],[0,0],[0,2]],[[2,2],[-2,0],[0,0]],[[0,2],[-2,-2],[0,0]],[[0,2],[0,-2],[0,2]]],[[[0,-2],[2,2],[0,0]],[[0,-2],[0,2],[0,-2]],[[-2,-2],[0,0],[0,-2]],[[-2,-2],[2,0],[0,0]]],[[[2,2],[-2,0],[0,0]],[[2,2],[0,0],[0,-2]],[[0,2],[0,-2],[0,-2]],[[0,2],[-2,-2],[0,0]]],[[[0,-2],[0,2],[0,2]],[[0,-2],[2,2],[0,0]],[[-2,-2],[2,0],[0,0]],[[-2,-2],[0,0],[0,2]]],[[[2,2],[0,0],[0,-2]],[[2,0],[0,0],[-2,-2]],[[0,0],[0,-2],[-2,-2]],[[0,2],[0,-2],[0,-2]]],[[[0,0],[0,2],[2,2]],[[0,-2],[0,2],[0,2]],[[-2,-2],[0,0],[0,2]],[[-2,0],[0,0],[2,2]]],[[[0,0],[0,2],[-2,-2]],[[0,-2],[0,2],[0,-2]],[[-2,-2],[0,0],[0,-2]],[[-2,0],[0,0],[-2,-2]]],[[[2,2],[0,0],[0,2]],[[2,0],[0,0],[2,2]],[[0,0],[0,-2],[2,2]],[[0,2],[0,-2],[0,2]]],[[[0,2],[2,2],[0,0]],[[0,2],[0,2],[0,-2]],[[2,2],[0,0],[0,-2]],[[2,2],[2,0],[0,0]]],[[[-2,-2],[0,0],[0,2]],[[-2,-2],[-2,0],[0,0]],[[0,-2],[-2,-2],[0,0]],[[0,-2],[0,-2],[0,2]]],[[[0,2],[0,2],[0,2]],[[0,2],[2,2],[0,0]],[[2,2],[2,0],[0,0]],[[2,2],[0,0],[0,2]]],[[[-2,-2],[-2,0],[0,0]],[[-2,-2],[0,0],[0,-2]],[[0,-2],[0,-2],[0,-2]],[[0,-2],[-2,-2],[0,0]]],[[[0,2],[0,2],[0,-2]],[[0,0],[0,2],[-2,-2]],[[2,0],[0,0],[-2,-2]],[[2,2],[0,0],[0,-2]]],[[[-2,0],[0,0],[2,2]],[[-2,-2],[0,0],[0,2]],[[0,-2],[0,-2],[0,2]],[[0,0],[0,-2],[2,2]]],[[[-2,0],[0,0],[-2,-2]],[[-2,-2],[0,0],[0,-2]],[[0,-2],[0,-2],[0,-2]],[[0,0],[0,-2],[-2,-2]]],[[[0,2],[0,2],[0,2]],[[0,0],[0,2],[2,2]],[[2,0],[0,0],[2,2]],[[2,2],[0,0],[0,2]]],[[[2,2],[0,0],[0,2]],[[2,2],[2,0],[0,0]],[[2,2],[0,0],[0,-2]],[[2,2],[-2,0],[0,0]]],[[[-2,-2],[0,0],[0,2]],[[-2,-2],[2,0],[0,0]],[[-2,-2],[0,0],[0,-2]],[[-2,-2],[-2,0],[0,0]]],[[[0,2],[2,2],[0,0]],[[0,0],[2,2],[-2,0]],[[0,0],[0,2],[-2,-2]],[[0,2],[0,2],[0,-2]]],[[[0,0],[0,-2],[2,2]],[[0,-2],[0,-2],[0,2]],[[0,-2],[-2,-2],[0,0]],[[0,0],[-2,-2],[2,0]]],[[[0,0],[2,2],[-2,0]],[[0,-2],[2,2],[0,0]],[[0,-2],[0,2],[0,-2]],[[0,0],[0,2],[-2,-2]]],[[[0,2],[0,-2],[0,2]],[[0,0],[0,-2],[2,2]],[[0,0],[-2,-2],[2,0]],[[0,2],[-2,-2],[0,0]]],[[[0,0],[0,2],[2,2]],[[0,-2],[0,2],[0,2]],[[0,-2],[2,2],[0,0]],[[0,0],[2,2],[2,0]]],[[[0,2],[-2,-2],[0,0]],[[0,0],[-2,-2],[-2,0]],[[0,0],[0,-2],[-2,-2]],[[0,2],[0,-2],[0,-2]]],[[[0,2],[0,2],[0,2]],[[0,0],[0,2],[2,2]],[[0,0],[2,2],[2,0]],[[0,2],[2,2],[0,0]]],[[[0,0],[-2,-2],[-2,0]],[[0,-2],[-2,-2],[0,0]],[[0,-2],[0,-2],[0,-2]],[[0,0],[0,-2],[-2,-2]]],[[[0,2],[2,2],[0,0]],[[0,0],[2,2],[2,0]],[[0,-2],[2,2],[0,0]],[[0,0],[2,2],[-2,0]]],[[[0,2],[-2,-2],[0,0]],[[0,0],[-2,-2],[2,0]],[[0,-2],[-2,-2],[0,0]],[[0,0],[-2,-2],[-2,0]]]],"cen":[[[0,0],[0,0],[4,4]],[[0,2],[-2,-4],[2,2]],[[2,4],[-2,-2],[4,6]],[[4,6],[-2,-4],[2,2]],[[4,8],[0,0],[4,4]],[[4,8],[0,0],[0,0]],[[4,6],[2,4],[2,2]],[[2,4],[2,2],[0,-2]],[[0,2],[2,4],[2,2]],[[0,0],[0,0],[0,0]]],"up":[1,0,1,0,1,0,1,0,1,0],"axis":[[0,0],[1,0],[0,1]],"pent":[[[[0,-2],[0,-2],[4,2]],[[0,2],[0,-2],[4,2]],[[0,0],[-2,-2],[2,4]],[[-2,0],[0,0],[2,2]],[[2,0],[0,0],[2,2]]],[[[-2,2],[-2,-4],[4,4]],[[2,2],[-2,-4],[4,4]],[[0,2],[0,-2],[4,2]],[[0,0],[-2,-2],[2,4]],[[0,4],[-2,-2],[2,4]]],[[[2,2],[-2,-4],[4,4]],[[2,6],[-2,-4],[4,4]],[[2,4],[-4,-4],[2,6]],[[0,4],[-2,-2],[2,4]],[[4,4],[-2,-2],[2,4]]],[[[2,6],[-2,-4],[4,4]],[[6,6],[-2,-4],[4,4]],[[4,6],[0,-2],[4,2]],[[4,4],[-2,-2],[2,4]],[[4,8],[-2,-2],[2,4]]],[[[4,6],[0,-2],[4,2]],[[4,10],[0,-2],[4,2]],[[4,8],[-2,-2],[2,4]],[[2,8],[0,0],[2,2]],[[6,8],[0,0],[2,2]]],[[[2,8],[0,0],[2,2]],[[6,8],[0,0],[2,2]],[[4,8],[2,2],[2,0]],[[4,6],[0,2],[0,2]],[[4,10],[0,2],[0,2]]],[[[4,4],[2,2],[2,0]],[[4,8],[2,2],[2,0]],[[4,6],[0,2],[0,2]],[[2,6],[2,4],[0,0]],[[6,6],[2,4],[0,0]]],[[[0,4],[2,2],[2,0]],[[4,4],[2,2],[2,0]],[[2,4],[4,4],[2,-2]],[[2,2],[2,4],[0,0]],[[2,6],[2,4],[0,0]]],[[[0,0],[2,2],[2,0]],[[0,4],[2,2],[2,0]],[[0,2],[0,2],[0,2]],[[-2,2],[2,4],[0,0]],[[2,2],[2,4],[0,0]]],[[[-2,0],[0,0],[2,2]],[[2,0],[0,0],[2,2]],[[0,0],[2,2],[2,0]],[[0,-2],[0,2],[0,2]],[[0,2],[0,2],[0,2]]]]};
+const PH=(1+Math.sqrt(5))/2, f=v=>v.map(([a,b])=>a+b*PH);   // 観察者側の表示
+const A=f(D.axis),al=Math.hypot(...A),ax=A.map(x=>x/al);
+const cr=(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]];
+let e1=cr(ax,[1,0,0]);const n1=Math.hypot(...e1);e1=e1.map(x=>x/n1);const e2=cr(ax,e1);
+const L=p=>[p[0]*e1[0]+p[1]*e1[1]+p[2]*e1[2],p[0]*e2[0]+p[1]*e2[1]+p[2]*e2[2],p[0]*ax[0]+p[1]*ax[1]+p[2]*ax[2]];
+const C=D.cen.map(c=>L(f(c)));const cz=C.reduce((s,c)=>s+c[2],0)/10,cxy=[C.reduce((s,c)=>s+c[0],0)/10,C.reduce((s,c)=>s+c[1],0)/10];
+const sh=p=>[p[0]-cxy[0],p[1]-cxy[1],p[2]-cz];
+const FACES=D.faces.map(q=>q.map(v=>L(f(v))));
+const RTS=C.map((c,i)=>({c:sh(c),up:D.up[i],col:'--c'+(i%5)}));
+const PENT=D.pent.map(p=>{const Q=p.map(v=>sh(L(f(v))));const m=[0,1].map(k=>Q.reduce((s,q)=>s+q[k],0)/5);Q.sort((a,b)=>Math.atan2(a[1]-m[1],a[0]-m[0])-Math.atan2(b[1]-m[1],b[0]-m[0]));return Q});
+const R=Math.max(...RTS.map(r=>Math.hypot(r.c[0],r.c[1])))+Math.max(...FACES.flat().map(v=>Math.hypot(...v)));
+const cv=document.getElementById('cv'),cx=cv.getContext('2d');
+const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const TXT=['ひし形30面体10個の輪','真横から：上の段5個・下の段5個のジグザグ','真ん中の面で切る：10個とも正五角形','真上から：五角形10枚の円環'];
+const TILT=[0.75,1.5,1.1,0.0];
+let st=0,t0=0,play=true,ang=0,tilt=0.75;
+if(matchMedia('(prefers-reduced-motion: reduce)').matches){play=false;st=3;tilt=0;document.getElementById('play').setAttribute('aria-pressed','false')}
+document.getElementById('play').onclick=e=>{play=!play;e.target.setAttribute('aria-pressed',play)};
+document.getElementById('step').onclick=()=>{st=(st+1)%4;t0=performance.now()};
+function V(p){ // 軸のまわりに回し、tilt だけ倒して画面へ（tilt=0 で真上、π/2 で真横）
+  const c=Math.cos(ang),s=Math.sin(ang);const x=p[0]*c-p[1]*s,y=p[0]*s+p[1]*c;const ct=Math.cos(tilt),sn=Math.sin(tilt);
+  return[x,y*ct-p[2]*sn,p[2]*ct+y*sn]}
+function rgb(h){h=h.replace('#','');return[0,2,4].map(i=>parseInt(h.slice(i,i+2),16))}
+function draw(now){
+  if(play&&now-t0>4200){st=(st+1)%4;t0=now}
+  if(play&&st!==3)ang+=0.004;
+  tilt+=(TILT[st]-tilt)*0.05;
+  const W=cv.width,o=W/2,s=W*0.44/R;cx.clearRect(0,0,W,W);
+  const P2=v=>[o+v[0]*s,o+v[1]*s];
+  const polys=[];const Lt=[-0.35,-0.5,0.8];
+  const rtA=st>=2?0.12:0.88;
+  for(const r of RTS){const base=rgb(css(r.col));for(const q of FACES){const pts=q.map(v=>V([v[0]+r.c[0],v[1]+r.c[1],v[2]+r.c[2]]));
+    const u=pts[1].map((a,i)=>a-pts[0][i]),w=pts[3].map((a,i)=>a-pts[0][i]);let n=cr(u,w);const nl=Math.hypot(...n);n=n.map(a=>a/nl);if(n[2]<0)n=n.map(a=>-a);
+    const l=Math.max(0,n[0]*Lt[0]+n[1]*Lt[1]+n[2]*Lt[2]),k=(r.up?0.78:0.58)+0.35*l;
+    polys.push([pts.reduce((a,p)=>a+p[2],0)/4,pts,'rgba('+base.map(c=>Math.round(Math.min(255,c*k+25*l))).join(',')+','+rtA+')',0.6])}}
+  polys.sort((a,b)=>a[0]-b[0]);cx.lineJoin='round';
+  for(const [,pts,col] of polys){cx.beginPath();pts.forEach((p,i)=>i?cx.lineTo(...P2(p)):cx.moveTo(...P2(p)));cx.closePath();cx.fillStyle=col;cx.fill();cx.strokeStyle=css('--ink');cx.globalAlpha=st>=2?0.08:0.25;cx.lineWidth=0.8;cx.stroke();cx.globalAlpha=1}
+  if(st===2){const rr=R*1.05;const sq=[[-rr,-rr,0],[rr,-rr,0],[rr,rr,0],[-rr,rr,0]].map(V);cx.beginPath();sq.forEach((p,i)=>i?cx.lineTo(...P2(p)):cx.moveTo(...P2(p)));cx.closePath();cx.fillStyle=css('--plane');cx.globalAlpha=0.12;cx.fill();cx.globalAlpha=0.6;cx.strokeStyle=css('--plane');cx.lineWidth=2;cx.stroke();cx.globalAlpha=1}
+  if(st>=2)PENT.forEach((Q,i)=>{const pts=Q.map(V);cx.beginPath();pts.forEach((p,k)=>k?cx.lineTo(...P2(p)):cx.moveTo(...P2(p)));cx.closePath();cx.fillStyle=css('--c'+(i%5));cx.fill();cx.strokeStyle=css('--ink');cx.lineWidth=2;cx.stroke()});
+  cx.fillStyle=css('--ink');cx.font='500 26px '+css('--f-mono');cx.fillText(TXT[st],22,42);
+  requestAnimationFrame(draw);
+}
+requestAnimationFrame(draw);
+</script>

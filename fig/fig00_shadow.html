@@ -1,0 +1,135 @@
+<title>6次元立方体の影の入れ子</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@600;800&family=Zen+Kaku+Gothic+New:wght@400;500&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* 一本の縦の流れ：題 → 動く図 → 操作 → 説明。殻は内から外へ一枚ずつ開く */
+:root{
+  --bg:#eceff4; --panel:#f8f9fb; --ink:#1b2333; --muted:#5d6779; --line:#cfd5df;
+  --s0:#c99a1e; --s1:#2f62b0; --s2:#c0452e; --s3:#2f8a55; --edge:#8e98aa;
+  --f-disp:"Shippori Mincho","Hiragino Mincho ProN","Yu Mincho",serif;
+  --f-body:"Zen Kaku Gothic New","Hiragino Sans","Yu Gothic",system-ui,sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#0e131d;--panel:#151c29;--ink:#e3e8f1;--muted:#97a1b3;--line:#2a3446;--s0:#e8bd4a;--s1:#6f9ae8;--s2:#ec7a62;--s3:#5cc086;--edge:#5b667a;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0e131d;--panel:#151c29;--ink:#e3e8f1;--muted:#97a1b3;--line:#2a3446;--s0:#e8bd4a;--s1:#6f9ae8;--s2:#ec7a62;--s3:#5cc086;--edge:#5b667a;color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);line-height:1.75;margin:0;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 40px}
+.wrap{max-width:760px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+h1{font-family:var(--f-disp);font-weight:800;font-size:clamp(1.4rem,4vw,1.9rem);line-height:1.3;margin:0;text-wrap:balance}
+.stage{position:relative;background:var(--panel);border:1px solid var(--line);border-radius:6px;overflow:hidden}
+canvas{display:block;width:100%;max-width:100%;aspect-ratio:1/1;touch-action:none;cursor:grab}
+.read{position:absolute;left:12px;top:10px;right:12px;font-family:var(--f-mono);font-size:.8rem;color:var(--muted);pointer-events:none;font-variant-numeric:tabular-nums}
+.ctl{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center}
+button{font:inherit;font-size:.88rem;background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:4px;padding:6px 12px;cursor:pointer}
+button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+button:focus-visible{outline:2px solid var(--s1);outline-offset:2px}
+.key{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:.82rem;color:var(--muted)}
+.key span{display:inline-flex;align-items:center;gap:6px}
+.key i{width:11px;height:11px;border-radius:50%;display:inline-block}
+.text{max-width:65ch}
+.text h2{font-family:var(--f-disp);font-weight:600;font-size:1.12rem;margin:18px 0 4px}
+.text p{margin:6px 0}
+.tbl{overflow-x:auto}
+table{border-collapse:collapse;font-family:var(--f-mono);font-size:.82rem;font-variant-numeric:tabular-nums}
+th,td{padding:4px 10px;border-bottom:1px solid var(--line);text-align:left}
+th{color:var(--muted);font-weight:400}
+</style>
+<div class="wrap">
+<h1>6次元立方体の影の入れ子</h1>
+<div class="stage">
+  <canvas id="cv" width="900" height="900" aria-label="6次元立方体の頂点64個の影が、正二十面体・正十二面体・正十二面体・正二十面体の殻に分かれる図"></canvas>
+  <div class="read" id="read"></div>
+</div>
+<div class="ctl">
+  <button id="play" aria-pressed="true">再生</button>
+  <button id="step">一歩進む</button>
+  <button id="speed" aria-pressed="false">ゆっくり</button>
+  <button id="cube6" aria-pressed="false">6次元の辺を出す</button>
+</div>
+<div class="key">
+  <span><i style="background:var(--s0)"></i>正二十面体（内）</span>
+  <span><i style="background:var(--s1)"></i>正十二面体</span>
+  <span><i style="background:var(--s2)"></i>正十二面体（φ 倍）</span>
+  <span><i style="background:var(--s3)"></i>正二十面体（φ² 倍）</span>
+</div>
+<div class="text">
+<h2>何を見ているか</h2>
+<p>6次元の立方体の頂点は、±1 を6つ並べた番地 64 個です。この番地を、正二十面体の5回軸6本に一つずつ割り当てて足し合わせ、3次元に写しました。図はその影です。</p>
+<p>64 個の影は、中心からの距離で4枚の殻に分かれます。内から順に、正二十面体（12 点）、正十二面体（20 点）、φ 倍の正十二面体（20 点）、φ² 倍の正二十面体（12 点）です。12＋20＋20＋12＝64 で、余る点はありません。</p>
+<div class="tbl"><table>
+<tr><th>殻</th><th>点</th><th>長さ²</th><th>形</th></tr>
+<tr><td>1</td><td>12</td><td>12−4φ</td><td>正二十面体</td></tr>
+<tr><td>2</td><td>20</td><td>12</td><td>正十二面体</td></tr>
+<tr><td>3</td><td>20</td><td>12φ²</td><td>正十二面体</td></tr>
+<tr><td>4</td><td>12</td><td>12＋16φ</td><td>正二十面体</td></tr>
+</table></div>
+<h2>正十二面体の中の立方体</h2>
+<p>6次元の立方体の中には、面ではない立方体が 120 個あります。そのうち 5 個が、正十二面体の殻にちょうど収まる立方体として写ります。最後の段では、その 5 個を一つずつ示します。立方体の頂点を一つおきに取ると、正四面体と、それを中心について反転させた正四面体に分かれます。</p>
+<h2>確かめ方</h2>
+<p>座標はすべて a＋bφ の整数の組で持ち、長さ² の比較は整数の等号だけで行いました。φ を 3/2 に替えた写し方では、影は6枚の殻に割れ、正十二面体は現れません。小数にしたのは、画面に置くところだけです。</p>
+</div>
+</div>
+<script>
+const D={"shells": [{"n2": [12, -4], "kind": "\u6b63\u4e8c\u5341\u9762\u4f53", "pts": [9, 10, 18, 23, 27, 29, 34, 36, 40, 45, 53, 54], "edges": [[9, 18], [9, 23], [9, 34], [9, 36], [9, 53], [10, 23], [10, 29], [10, 36], [10, 45], [10, 54], [18, 29], [18, 36], [18, 40], [18, 53], [23, 34], [23, 36], [23, 45], [27, 34], [27, 40], [27, 45], [27, 53], [27, 54], [29, 36], [29, 40], [29, 54], [34, 45], [34, 53], [40, 53], [40, 54], [45, 54]], "cubes": []}, {"n2": [12, 0], "kind": "\u6b63\u5341\u4e8c\u9762\u4f53", "pts": [2, 8, 11, 13, 19, 21, 22, 25, 26, 31, 32, 37, 38, 41, 42, 44, 50, 52, 55, 61], "edges": [[2, 13], [2, 21], [2, 37], [8, 21], [8, 22], [8, 52], [11, 37], [11, 38], [11, 55], [13, 22], [13, 38], [19, 32], [19, 37], [19, 41], [21, 32], [22, 44], [25, 32], [25, 50], [25, 52], [26, 44], [26, 52], [26, 61], [31, 38], [31, 42], [31, 44], [41, 50], [41, 55], [42, 55], [42, 61], [50, 61]], "cubes": [[31, 26, 13, 37, 32, 8, 55, 50], [61, 31, 22, 11, 32, 41, 52, 2], [11, 13, 42, 50, 19, 52, 21, 44], [38, 25, 22, 26, 37, 42, 41, 21], [38, 61, 25, 44, 8, 55, 19, 2]]}, {"n2": [12, 12], "kind": "\u6b63\u5341\u4e8c\u9762\u4f53", "pts": [0, 3, 5, 6, 12, 15, 17, 20, 24, 30, 33, 39, 43, 46, 48, 51, 57, 58, 60, 63], "edges": [[0, 5], [0, 17], [0, 20], [3, 5], [3, 33], [3, 39], [5, 6], [6, 12], [6, 15], [12, 20], [12, 30], [15, 39], [15, 46], [17, 33], [17, 48], [20, 24], [24, 48], [24, 60], [30, 46], [30, 60], [33, 51], [39, 43], [43, 51], [43, 63], [46, 63], [48, 57], [51, 57], [57, 58], [58, 60], [58, 63]], "cubes": [[17, 39, 5, 46, 24, 12, 51, 58], [20, 48, 5, 33, 30, 15, 43, 58], [48, 60, 12, 15, 51, 0, 63, 3], [57, 6, 39, 24, 30, 33, 0, 63], [20, 6, 17, 57, 46, 60, 43, 3]]}, {"n2": [12, 16], "kind": "\u6b63\u4e8c\u5341\u9762\u4f53", "pts": [1, 4, 7, 14, 16, 28, 35, 47, 49, 56, 59, 62], "edges": [[1, 4], [1, 7], [1, 16], [1, 35], [1, 49], [4, 7], [4, 14], [4, 16], [4, 28], [7, 14], [7, 35], [7, 47], [14, 28], [14, 47], [14, 62], [16, 28], [16, 49], [16, 56], [28, 56], [28, 62], [35, 47], [35, 49], [35, 59], [47, 59], [47, 62], [49, 56], [49, 59], [56, 59], [56, 62], [59, 62]], "cubes": []}], "edges6": [[0, 32], [0, 16], [0, 8], [0, 4], [0, 2], [0, 1], [1, 33], [1, 17], [1, 9], [1, 5], [1, 3], [2, 34], [2, 18], [2, 10], [2, 6], [2, 3], [3, 35], [3, 19], [3, 11], [3, 7], [4, 36], [4, 20], [4, 12], [4, 6], [4, 5], [5, 37], [5, 21], [5, 13], [5, 7], [6, 38], [6, 22], [6, 14], [6, 7], [7, 39], [7, 23], [7, 15], [8, 40], [8, 24], [8, 12], [8, 10], [8, 9], [9, 41], [9, 25], [9, 13], [9, 11], [10, 42], [10, 26], [10, 14], [10, 11], [11, 43], [11, 27], [11, 15], [12, 44], [12, 28], [12, 14], [12, 13], [13, 45], [13, 29], [13, 15], [14, 46], [14, 30], [14, 15], [15, 47], [15, 31], [16, 48], [16, 24], [16, 20], [16, 18], [16, 17], [17, 49], [17, 25], [17, 21], [17, 19], [18, 50], [18, 26], [18, 22], [18, 19], [19, 51], [19, 27], [19, 23], [20, 52], [20, 28], [20, 22], [20, 21], [21, 53], [21, 29], [21, 23], [22, 54], [22, 30], [22, 23], [23, 55], [23, 31], [24, 56], [24, 28], [24, 26], [24, 25], [25, 57], [25, 29], [25, 27], [26, 58], [26, 30], [26, 27], [27, 59], [27, 31], [28, 60], [28, 30], [28, 29], [29, 61], [29, 31], [30, 62], [30, 31], [31, 63], [32, 48], [32, 40], [32, 36], [32, 34], [32, 33], [33, 49], [33, 41], [33, 37], [33, 35], [34, 50], [34, 42], [34, 38], [34, 35], [35, 51], [35, 43], [35, 39], [36, 52], [36, 44], [36, 38], [36, 37], [37, 53], [37, 45], [37, 39], [38, 54], [38, 46], [38, 39], [39, 55], [39, 47], [40, 56], [40, 44], [40, 42], [40, 41], [41, 57], [41, 45], [41, 43], [42, 58], [42, 46], [42, 43], [43, 59], [43, 47], [44, 60], [44, 46], [44, 45], [45, 61], [45, 47], [46, 62], [46, 47], [47, 63], [48, 56], [48, 52], [48, 50], [48, 49], [49, 57], [49, 53], [49, 51], [50, 58], [50, 54], [50, 51], [51, 59], [51, 55], [52, 60], [52, 54], [52, 53], [53, 61], [53, 55], [54, 62], [54, 55], [55, 63], [56, 60], [56, 58], [56, 57], [57, 61], [57, 59], [58, 62], [58, 59], [59, 63], [60, 62], [60, 61], [61, 63], [62, 63]], "pts": [[[0, 2], [0, 2], [0, 2]], [[0, 0], [0, 2], [2, 2]], [[0, 0], [0, 2], [-2, 2]], [[0, -2], [0, 2], [0, 2]], [[0, 2], [2, 2], [0, 0]], [[0, 0], [2, 2], [2, 0]], [[0, 0], [2, 2], [-2, 0]], [[0, -2], [2, 2], [0, 0]], [[0, 2], [-2, 2], [0, 0]], [[0, 0], [-2, 2], [2, 0]], [[0, 0], [-2, 2], [-2, 0]], [[0, -2], [-2, 2], [0, 0]], [[0, 2], [0, 2], [0, -2]], [[0, 0], [0, 2], [2, -2]], [[0, 0], [0, 2], [-2, -2]], [[0, -2], [0, 2], [0, -2]], [[2, 2], [0, 0], [0, 2]], [[2, 0], [0, 0], [2, 2]], [[2, 0], [0, 0], [-2, 2]], [[2, -2], [0, 0], [0, 2]], [[2, 2], [2, 0], [0, 0]], [[2, 0], [2, 0], [2, 0]], [[2, 0], [2, 0], [-2, 0]], [[2, -2], [2, 0], [0, 0]], [[2, 2], [-2, 0], [0, 0]], [[2, 0], [-2, 0], [2, 0]], [[2, 0], [-2, 0], [-2, 0]], [[2, -2], [-2, 0], [0, 0]], [[2, 2], [0, 0], [0, -2]], [[2, 0], [0, 0], [2, -2]], [[2, 0], [0, 0], [-2, -2]], [[2, -2], [0, 0], [0, -2]], [[-2, 2], [0, 0], [0, 2]], [[-2, 0], [0, 0], [2, 2]], [[-2, 0], [0, 0], [-2, 2]], [[-2, -2], [0, 0], [0, 2]], [[-2, 2], [2, 0], [0, 0]], [[-2, 0], [2, 0], [2, 0]], [[-2, 0], [2, 0], [-2, 0]], [[-2, -2], [2, 0], [0, 0]], [[-2, 2], [-2, 0], [0, 0]], [[-2, 0], [-2, 0], [2, 0]], [[-2, 0], [-2, 0], [-2, 0]], [[-2, -2], [-2, 0], [0, 0]], [[-2, 2], [0, 0], [0, -2]], [[-2, 0], [0, 0], [2, -2]], [[-2, 0], [0, 0], [-2, -2]], [[-2, -2], [0, 0], [0, -2]], [[0, 2], [0, -2], [0, 2]], [[0, 0], [0, -2], [2, 2]], [[0, 0], [0, -2], [-2, 2]], [[0, -2], [0, -2], [0, 2]], [[0, 2], [2, -2], [0, 0]], [[0, 0], [2, -2], [2, 0]], [[0, 0], [2, -2], [-2, 0]], [[0, -2], [2, -2], [0, 0]], [[0, 2], [-2, -2], [0, 0]], [[0, 0], [-2, -2], [2, 0]], [[0, 0], [-2, -2], [-2, 0]], [[0, -2], [-2, -2], [0, 0]], [[0, 2], [0, -2], [0, -2]], [[0, 0], [0, -2], [2, -2]], [[0, 0], [0, -2], [-2, -2]], [[0, -2], [0, -2], [0, -2]]]};
+const PHI=(1+Math.sqrt(5))/2;               // 観察者側の表示：a+bφ を画面の座標にする
+const X=D.pts.map(p=>p.map(c=>c[0]+c[1]*PHI));
+const cv=document.getElementById('cv'),cx=cv.getContext('2d');
+const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const SC=['--s0','--s1','--s2','--s3'];
+const steps=[
+ {show:1,txt:'殻1：正二十面体 12点'},
+ {show:2,txt:'殻2：正十二面体 20点'},
+ {show:3,txt:'殻3：φ倍の正十二面体 20点'},
+ {show:4,txt:'殻4：φ²倍の正二十面体 12点（合わせて64点）'},
+ ...[0,1,2,3,4].map(i=>({show:4,cube:i,txt:'正十二面体の中の立方体 '+(i+1)+' / 5'}))
+];
+let st=0,t0=0,play=true,slow=false,show6=false,az=0.4,tilt=0.35,drag=null;
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+if(reduce){play=false;document.getElementById('play').setAttribute('aria-pressed','false');st=3}
+document.getElementById('play').onclick=e=>{play=!play;e.target.setAttribute('aria-pressed',play)};
+document.getElementById('step').onclick=()=>{st=(st+1)%steps.length;t0=performance.now()};
+document.getElementById('speed').onclick=e=>{slow=!slow;e.target.setAttribute('aria-pressed',slow)};
+document.getElementById('cube6').onclick=e=>{show6=!show6;e.target.setAttribute('aria-pressed',show6)};
+cv.addEventListener('pointerdown',e=>{drag={x:e.clientX,y:e.clientY,az,tilt};cv.setPointerCapture(e.pointerId)});
+cv.addEventListener('pointermove',e=>{if(!drag)return;az=drag.az+(e.clientX-drag.x)*0.01;tilt=Math.max(-1.5,Math.min(1.5,drag.tilt+(e.clientY-drag.y)*0.01))});
+cv.addEventListener('pointerup',()=>drag=null);
+let R=0;for(const p of X)R=Math.max(R,Math.hypot(...p));
+function proj(p){const ca=Math.cos(az),sa=Math.sin(az),ct=Math.cos(tilt),stt=Math.sin(tilt);
+  const x=p[0]*ca-p[1]*sa,y=p[0]*sa+p[1]*ca;return[x,y*ct-p[2]*stt,y*stt+p[2]*ct]}
+function draw(now){
+  const dur=slow?4200:2400;
+  if(play&&now-t0>dur){st=(st+1)%steps.length;t0=now}
+  if(play&&!drag)az+=slow?0.002:0.004;
+  const W=cv.width,H=cv.height,s=W*0.44/R;cx.clearRect(0,0,W,H);
+  const P=X.map(proj),cur=steps[st];
+  const scr=p=>[W/2+p[0]*s,H/2+p[1]*s];
+  cx.lineCap='round';
+  if(show6){cx.strokeStyle=css('--edge');cx.globalAlpha=0.22;cx.lineWidth=W/900;
+    for(const [a,b] of D.edges6){const A=scr(P[a]),B=scr(P[b]);cx.beginPath();cx.moveTo(...A);cx.lineTo(...B);cx.stroke()}
+    cx.globalAlpha=1}
+  const segs=[];
+  D.shells.forEach((sh,k)=>{if(k>=cur.show)return;const col=css(SC[k]);
+    const fade=(cur.cube!==undefined&&k!==1)?0.25:1;
+    for(const [a,b] of sh.edges)segs.push([(P[a][2]+P[b][2])/2,a,b,col,fade,W/420])});
+  if(cur.cube!==undefined){const c=D.shells[1].cubes[cur.cube];const col=css('--ink');
+    for(let i=0;i<8;i++)for(let j=i+1;j<8;j++){
+      const d=X[c[i]].map((v,m)=>v-X[c[j]][m]);const l=Math.hypot(...d);
+      let mn=1e9;for(let a=0;a<8;a++)for(let b=a+1;b<8;b++){const dd=Math.hypot(...X[c[a]].map((v,m)=>v-X[c[b]][m]));if(dd<mn)mn=dd}
+      if(Math.abs(l-mn)<1e-6)segs.push([(P[c[i]][2]+P[c[j]][2])/2+0.01,c[i],c[j],col,1,W/240])}}
+  segs.sort((a,b)=>a[0]-b[0]);
+  const dz=R;
+  for(const [z,a,b,col,fade,lw] of segs){const A=scr(P[a]),B=scr(P[b]);
+    cx.globalAlpha=fade*(0.35+0.65*(z+dz)/(2*dz));cx.strokeStyle=col;cx.lineWidth=lw;
+    cx.beginPath();cx.moveTo(...A);cx.lineTo(...B);cx.stroke()}
+  D.shells.forEach((sh,k)=>{if(k>=cur.show)return;cx.fillStyle=css(SC[k]);
+    for(const i of sh.pts){const A=scr(P[i]);cx.globalAlpha=(cur.cube!==undefined&&k!==1?0.3:1)*(0.45+0.55*(P[i][2]+dz)/(2*dz));
+      cx.beginPath();cx.arc(A[0],A[1],W/150,0,7);cx.fill()}});
+  cx.globalAlpha=1;
+  cx.fillStyle=css('--ink');cx.beginPath();cx.arc(W/2,H/2,W/260,0,7);cx.fill();
+  document.getElementById('read').textContent=cur.txt;
+  requestAnimationFrame(draw);
+}
+requestAnimationFrame(draw);
+</script>

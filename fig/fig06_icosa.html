@@ -1,0 +1,163 @@
+<title>30面体の正二十面体</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;700&family=Shippori+Mincho:wght@600&display=swap">
+<style>
+/* 一本の縦の流れ：題 → 図 → 操作 → 説明。前の2枚と同じ組み方 */
+:root{
+  --bg:#eef1f4; --panel:#f8fafb; --ink:#1f2a33; --sub:#5a6772; --line:#d3dae0;
+  --up:#2f7f86; --down:#7fb3d5; --pole:#e9e4d8; --ghost:#9fb0bd; --axis:#b8892e; --center:#1f2a33;
+  --display:"Shippori Mincho","Hiragino Mincho ProN",serif;
+  --body:"Zen Kaku Gothic New","Hiragino Sans","Noto Sans JP",sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#11171c; --panel:#172028; --ink:#e6edf2; --sub:#9aa9b5; --line:#2c3842;
+  --up:#4fb0b6; --down:#9cc8e6; --pole:#e9e4d8; --ghost:#6f8494; --axis:#e0b45c; --center:#e6edf2; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#11171c; --panel:#172028; --ink:#e6edf2; --sub:#9aa9b5; --line:#2c3842;
+  --up:#4fb0b6; --down:#9cc8e6; --pole:#e9e4d8; --ghost:#6f8494; --axis:#e0b45c; --center:#e6edf2; color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);line-height:1.75}
+.wrap{max-width:760px;margin:0 auto;padding-block:20px 40px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  display:flex;flex-direction:column;gap:14px}
+h1{font-family:var(--display);font-size:1.6rem;line-height:1.35;margin:0;text-wrap:balance;letter-spacing:.02em}
+.stage{position:relative;background:var(--panel);border:1px solid var(--line);border-radius:6px;overflow:hidden}
+canvas{display:block;width:100%;aspect-ratio:1/1;max-width:100%;touch-action:none;cursor:grab}
+.read{position:absolute;left:10px;top:8px;font-size:.8rem;color:var(--sub);font-variant-numeric:tabular-nums;pointer-events:none}
+.ctl{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center}
+.seg{display:flex;flex-wrap:wrap;border:1px solid var(--line);border-radius:5px;overflow:hidden}
+.seg button{font:inherit;font-size:.85rem;padding:6px 11px;border:0;background:var(--panel);color:var(--ink);cursor:pointer}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+button:focus-visible{outline:2px solid var(--axis);outline-offset:2px}
+.lab{font-size:.75rem;color:var(--sub);letter-spacing:.06em}
+.key{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:.8rem;color:var(--sub)}
+.key span{display:inline-flex;align-items:center;gap:5px}
+.key i{width:12px;height:12px;border-radius:2px;display:inline-block;border:1px solid var(--line)}
+.text{max-width:65ch}
+.text h2{font-family:var(--display);font-size:1.15rem;margin:18px 0 4px}
+.text p{margin:6px 0}
+</style>
+<div class="wrap">
+<h1>30面体の正二十面体</h1>
+<div class="stage">
+  <canvas id="cv" width="900" height="900" aria-label="ひし形30面体12個が正二十面体の頂点に並んだ集まり"></canvas>
+  <div class="read" id="read"></div>
+</div>
+<div class="ctl">
+  <div><div class="lab">輪（5回軸）</div>
+  <div class="seg" id="ring">
+    <button id="r-auto" data-v="auto" aria-pressed="true">順に</button>
+    <button id="r-1" data-v="0" aria-pressed="false">1</button><button id="r-2" data-v="1" aria-pressed="false">2</button>
+    <button id="r-3" data-v="2" aria-pressed="false">3</button><button id="r-4" data-v="3" aria-pressed="false">4</button>
+    <button id="r-5" data-v="4" aria-pressed="false">5</button><button id="r-6" data-v="5" aria-pressed="false">6</button>
+  </div></div>
+  <div><div class="lab">見る向き</div>
+  <div class="seg" id="view">
+    <button id="v-iso" data-v="iso" aria-pressed="true">斜め</button>
+    <button id="v-top" data-v="top" aria-pressed="false">軸の方向</button>
+    <button id="v-side" data-v="side" aria-pressed="false">真横</button>
+  </div></div>
+  <div><div class="lab">隣の集まり</div>
+  <div class="seg" id="nb">
+    <button id="n-off" data-v="off" aria-pressed="true">消す</button>
+    <button id="n-on" data-v="on" aria-pressed="false">薄く出す</button>
+  </div></div>
+  <div><div class="lab">動き</div><div class="seg"><button id="spin" aria-pressed="true">回す</button></div></div>
+</div>
+<div class="key">
+  <span><i style="background:conic-gradient(#e0605a,#e3b04b,#7cc46a,#3fb3c2,#5b7fe0,#b46ad8,#e0605a)"></i>輪の10個（色は軸のまわりの向き。上の段は明るく、下の段は深い色）</span>
+  <span><i style="background:var(--pole)"></i>軸の両端（白）</span>
+  <span><i style="background:var(--center);border-radius:50%"></i>中心（タイリングの頂点）</span>
+</div>
+<div class="text">
+<h2>何を見ているか</h2>
+<p>6 次元の格子から窓で切り出した立体のペンローズ（黄金のひし面体のタイリング）の中に、ひし形30面体の形にひし面体 20 個がちょうど詰まった塊があります。その塊 12 個が、正二十面体の頂点の位置に並んだ集まりです。正二十面体の辺にあたる 30 組は、どれも面で接しています。</p>
+<p>真ん中は30面体ではなく、タイリングの頂点が一つあるだけです。</p>
+<h2>輪は 6 つ重なっている</h2>
+<p>正二十面体の 5 回軸を 1 本選び、その両端（白）の 2 個を除くと、残る 10 個が上の段 5 個・下の段 5 個のジグザグの輪になります。これが5角形10個の円環の立体の姿です。軸は 6 本あるので、一つの集まりの中に輪が 6 つ重なっています。</p>
+<ul>
+<li>軸の違う 2 つの輪は、30面体を 8 個共有します（12 個から両方の軸の両端 4 個を除いた分）。</li>
+<li>一つの30面体は、自分を通らない 5 本の軸の輪に入ります。</li>
+</ul>
+<p>「軸の方向」にすると、選んだ軸の真上から見た姿になり、10 個の影が円環になります。</p>
+<h2>集まりどうし</h2>
+<p>集まりどうしは30面体を一つも共有しません。中心どうしの最も近い距離は、中心から30面体までの距離のちょうど φ 倍です。「隣の集まり」を出すと、最も近い位置にある集まりが見えます。</p>
+<h2>確かめ方</h2>
+<p>窓で選んだ点からひし面体を選び、内側の面がどれもちょうど 2 つのひし面体に属すること、体積が 2 種類で比が φ であることを確かめたタイリングです。中心から長さ² 900 までの範囲で、30面体の塊 1,167 個、10 個の輪 324 か所、正二十面体の集まり 54 個が見つかりました。輪はどれも、どこかの集まりに入っています。判定はすべて a＋bφ の整数の比較で、小数にしたのは図を描くところだけです。</p>
+</div>
+</div>
+<script>
+const D={"faces":[{"q":[[0.0,-1.618,2.618],[1.0,0.0,2.618],[0.0,1.618,2.618],[-1.0,0.0,2.618]],"n":[0.0,0.0,1.0]},{"q":[[0.0,-1.618,-2.618],[1.0,0.0,-2.618],[0.0,1.618,-2.618],[-1.0,0.0,-2.618]],"n":[-0.0,-0.0,-1.0]},{"q":[[1.618,-2.618,0.0],[2.618,-1.0,0.0],[2.618,0.0,1.618],[1.618,-1.618,1.618]],"n":[0.809,-0.5,0.309]},{"q":[[-2.618,0.0,-1.618],[-1.618,1.618,-1.618],[-1.618,2.618,0.0],[-2.618,1.0,0.0]],"n":[-0.809,0.5,-0.309]},{"q":[[1.618,-1.618,-1.618],[2.618,0.0,-1.618],[2.618,-1.0,0.0],[1.618,-2.618,0.0]],"n":[0.809,-0.5,-0.309]},{"q":[[-2.618,1.0,0.0],[-1.618,2.618,0.0],[-1.618,1.618,1.618],[-2.618,0.0,1.618]],"n":[-0.809,0.5,0.309]},{"q":[[0.0,-1.618,-2.618],[1.0,0.0,-2.618],[2.618,0.0,-1.618],[1.618,-1.618,-1.618]],"n":[0.5,-0.309,-0.809]},{"q":[[-2.618,0.0,1.618],[-1.618,1.618,1.618],[0.0,1.618,2.618],[-1.0,0.0,2.618]],"n":[-0.5,0.309,0.809]},{"q":[[-2.618,0.0,-1.618],[-1.618,1.618,-1.618],[0.0,1.618,-2.618],[-1.0,0.0,-2.618]],"n":[-0.5,0.309,-0.809]},{"q":[[0.0,-1.618,2.618],[1.0,0.0,2.618],[2.618,0.0,1.618],[1.618,-1.618,1.618]],"n":[0.5,-0.309,0.809]},{"q":[[2.618,0.0,-1.618],[1.618,1.618,-1.618],[1.618,2.618,0.0],[2.618,1.0,0.0]],"n":[0.809,0.5,-0.309]},{"q":[[-1.618,-2.618,0.0],[-2.618,-1.0,0.0],[-2.618,0.0,1.618],[-1.618,-1.618,1.618]],"n":[-0.809,-0.5,0.309]},{"q":[[2.618,1.0,0.0],[1.618,2.618,0.0],[1.618,1.618,1.618],[2.618,0.0,1.618]],"n":[0.809,0.5,0.309]},{"q":[[-1.618,-1.618,-1.618],[-2.618,0.0,-1.618],[-2.618,-1.0,0.0],[-1.618,-2.618,0.0]],"n":[-0.809,-0.5,-0.309]},{"q":[[1.0,0.0,-2.618],[0.0,1.618,-2.618],[1.618,1.618,-1.618],[2.618,0.0,-1.618]],"n":[0.5,0.309,-0.809]},{"q":[[-1.618,-1.618,1.618],[-2.618,0.0,1.618],[-1.0,0.0,2.618],[0.0,-1.618,2.618]],"n":[-0.5,-0.309,0.809]},{"q":[[-1.618,-1.618,-1.618],[-2.618,0.0,-1.618],[-1.0,0.0,-2.618],[0.0,-1.618,-2.618]],"n":[-0.5,-0.309,-0.809]},{"q":[[1.0,0.0,2.618],[0.0,1.618,2.618],[1.618,1.618,1.618],[2.618,0.0,1.618]],"n":[0.5,0.309,0.809]},{"q":[[2.618,0.0,-1.618],[2.618,1.0,0.0],[2.618,0.0,1.618],[2.618,-1.0,0.0]],"n":[1.0,0.0,0.0]},{"q":[[-2.618,0.0,-1.618],[-2.618,1.0,0.0],[-2.618,0.0,1.618],[-2.618,-1.0,0.0]],"n":[-1.0,-0.0,-0.0]},{"q":[[0.0,1.618,-2.618],[0.0,2.618,-1.0],[1.618,2.618,0.0],[1.618,1.618,-1.618]],"n":[0.309,0.809,-0.5]},{"q":[[-1.618,-2.618,0.0],[-1.618,-1.618,1.618],[0.0,-1.618,2.618],[0.0,-2.618,1.0]],"n":[-0.309,-0.809,0.5]},{"q":[[-1.618,1.618,-1.618],[-1.618,2.618,0.0],[0.0,2.618,-1.0],[0.0,1.618,-2.618]],"n":[-0.309,0.809,-0.5]},{"q":[[0.0,-2.618,1.0],[0.0,-1.618,2.618],[1.618,-1.618,1.618],[1.618,-2.618,0.0]],"n":[0.309,-0.809,0.5]},{"q":[[-1.618,2.618,0.0],[-1.618,1.618,1.618],[0.0,1.618,2.618],[0.0,2.618,1.0]],"n":[-0.309,0.809,0.5]},{"q":[[0.0,-1.618,-2.618],[0.0,-2.618,-1.0],[1.618,-2.618,0.0],[1.618,-1.618,-1.618]],"n":[0.309,-0.809,-0.5]},{"q":[[0.0,2.618,1.0],[0.0,1.618,2.618],[1.618,1.618,1.618],[1.618,2.618,0.0]],"n":[0.309,0.809,0.5]},{"q":[[-1.618,-1.618,-1.618],[-1.618,-2.618,0.0],[0.0,-2.618,-1.0],[0.0,-1.618,-2.618]],"n":[-0.309,-0.809,-0.5]},{"q":[[-1.618,2.618,0.0],[0.0,2.618,1.0],[1.618,2.618,0.0],[0.0,2.618,-1.0]],"n":[0.0,1.0,0.0]},{"q":[[-1.618,-2.618,0.0],[0.0,-2.618,1.0],[1.618,-2.618,0.0],[0.0,-2.618,-1.0]],"n":[-0.0,-1.0,-0.0]}],"pts":[[-2.618,-4.2361,0.0],[2.618,-4.2361,0.0],[0.0,-2.618,-4.2361],[0.0,-2.618,4.2361],[-4.2361,0.0,-2.618],[-4.2361,0.0,2.618],[4.2361,0.0,-2.618],[4.2361,0.0,2.618],[0.0,2.618,-4.2361],[0.0,2.618,4.2361],[-2.618,4.2361,0.0],[2.618,4.2361,0.0]],"axes":[[0,11],[1,10],[2,9],[3,8],[4,7],[5,6]],"nb":[[[-2.618,-8.4721,6.8541],[2.618,-8.4721,6.8541],[0.0,-6.8541,2.618],[0.0,-6.8541,11.0902],[-4.2361,-4.2361,4.2361],[-4.2361,-4.2361,9.4721],[4.2361,-4.2361,4.2361],[4.2361,-4.2361,9.4721],[0.0,-1.618,2.618],[0.0,-1.618,11.0902],[-2.618,0.0,6.8541],[2.618,0.0,6.8541]],[[-6.8541,2.618,0.0],[-1.618,2.618,0.0],[-4.2361,4.2361,-4.2361],[-4.2361,4.2361,4.2361],[-8.4721,6.8541,-2.618],[-8.4721,6.8541,2.618],[0.0,6.8541,-2.618],[0.0,6.8541,2.618],[-4.2361,9.4721,-4.2361],[-4.2361,9.4721,4.2361],[-6.8541,11.0902,0.0],[-1.618,11.0902,0.0]],[[4.2361,-4.2361,-4.2361],[9.4721,-4.2361,-4.2361],[6.8541,-2.618,-8.4721],[6.8541,-2.618,0.0],[2.618,0.0,-6.8541],[2.618,0.0,-1.618],[11.0902,0.0,-6.8541],[11.0902,0.0,-1.618],[6.8541,2.618,-8.4721],[6.8541,2.618,0.0],[4.2361,4.2361,-4.2361],[9.4721,4.2361,-4.2361]]]};
+const cv=document.getElementById('cv'),cx=cv.getContext('2d');
+const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+let ringSel='auto',ringIdx=0,lastRing=0,az=0.5,tilt=1.05,tTilt=1.05,spin=true,showNb=false;
+const views={iso:1.05,top:0.0,side:1.5708};
+function hex2rgb(h){h=h.replace('#','');return[parseInt(h.slice(0,2),16),parseInt(h.slice(2,4),16),parseInt(h.slice(4,6),16)]}
+// 光の当たる面は白へ寄せ、当たらない面は色を少し沈めるだけ（黒く濁らせない）
+function shade(rgb,l,a){const k=0.72+0.28*l, w=0.30*l*l;return 'rgba('+rgb.map(c=>Math.round(Math.min(255,c*k*(1-w)+255*w))).join(',')+','+a+')'}
+function hsl(h,s,l){const c=(1-Math.abs(2*l-1))*s,x=c*(1-Math.abs((h/60)%2-1)),m=l-c/2;
+  const [r,g,b]=[[c,x,0],[x,c,0],[0,c,x],[0,x,c],[x,0,c],[c,0,x]][Math.floor(h/60)%6];return[(r+m)*255,(g+m)*255,(b+m)*255]}
+function edge(rgb,a){return 'rgba('+rgb.map(c=>Math.round(c*0.62)).join(',')+','+a+')'}
+function setPressed(gid,v){document.querySelectorAll('#'+gid+' button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.v===v?'true':'false'))}
+document.querySelectorAll('#ring button').forEach(b=>b.onclick=()=>{ringSel=b.dataset.v;if(ringSel!=='auto')ringIdx=+ringSel;setPressed('ring',ringSel)});
+document.querySelectorAll('#view button').forEach(b=>b.onclick=()=>{tTilt=views[b.dataset.v];setPressed('view',b.dataset.v)});
+document.querySelectorAll('#nb button').forEach(b=>b.onclick=()=>{showNb=b.dataset.v==='on';setPressed('nb',b.dataset.v)});
+const sb=document.getElementById('spin');sb.onclick=()=>{spin=!spin;sb.setAttribute('aria-pressed',spin)};
+if(matchMedia('(prefers-reduced-motion: reduce)').matches){spin=false;sb.setAttribute('aria-pressed','false')}
+let drag=null;
+cv.addEventListener('pointerdown',e=>{drag={x:e.clientX,y:e.clientY,az,tilt:tTilt};cv.setPointerCapture(e.pointerId)});
+cv.addEventListener('pointermove',e=>{if(!drag)return;az=drag.az+(e.clientX-drag.x)*0.01;tTilt=Math.max(0,Math.min(1.5708,drag.tilt+(e.clientY-drag.y)*0.01));tilt=tTilt});
+cv.addEventListener('pointerup',()=>drag=null);
+// 選んだ軸を縦にそろえる基底（毎フレーム、なめらかに移す）
+const norm=v=>{const l=Math.hypot(...v);return v.map(x=>x/l)};
+const cr=(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]];
+const dt=(a,b)=>a[0]*b[0]+a[1]*b[1]+a[2]*b[2];
+function basis(w){w=norm(w);let r=Math.abs(w[0])<0.9?[1,0,0]:[0,1,0];const u=norm(cr(r,w));const v=cr(w,u);return[u,v,w]}
+let W=norm(D.pts[D.axes[0][1]].map((x,i)=>x-D.pts[D.axes[0][0]][i]));
+let EXT=0;for(const c of D.nb)for(const p of c)EXT=Math.max(EXT,Math.hypot(...p)+2.4);
+let EXT0=0;for(const p of D.pts)EXT0=Math.max(EXT0,Math.hypot(...p)+2.4);
+let ext=EXT0;
+function draw(now){
+  if(ringSel==='auto'&&now-lastRing>3200){lastRing=now;ringIdx=(ringIdx+1)%6}
+  const ax=D.axes[ringIdx], target=norm(D.pts[ax[1]].map((x,i)=>x-D.pts[ax[0]][i]));
+  W=norm(W.map((x,i)=>x+(target[i]-x)*0.08));
+  if(spin&&!drag)az+=0.004; tilt+=(tTilt-tilt)*0.12;
+  ext+=((showNb?EXT:EXT0)-ext)*0.1;
+  const [U,V,Wb]=basis(W);
+  const loc=p=>[dt(p,U),dt(p,V),dt(p,Wb)];
+  const Wd=cv.width,Hd=cv.height;cx.clearRect(0,0,Wd,Hd);
+  const s=Wd*0.46/ext;
+  const ca=Math.cos(az),sa=Math.sin(az),ct=Math.cos(tilt),st=Math.sin(tilt);
+  const P=v=>{const x=v[0]*ca-v[1]*sa,y=v[0]*sa+v[1]*ca;return[x,y*ct-v[2]*st,y*st+v[2]*ct]};
+  const L=[-0.35,-0.45,0.82];
+  const cU=hex2rgb(css('--up')),cD=hex2rgb(css('--down')),cP=hex2rgb(css('--pole')),cG=hex2rgb(css('--ghost'));
+  const polys=[];
+  const addRT=(p,col,alpha,core)=>{const c=P(loc(p));
+    for(const f of D.faces){const n=P(loc(f.n));if(n[2]<=0.01)continue;
+      const l=Math.max(0,n[0]*L[0]+n[1]*L[1]+n[2]*L[2]);
+      const q=f.q.map(v=>{const r=P(loc(v));return[r[0]+c[0],r[1]+c[1],r[2]+c[2]]});
+      polys.push([(q[0][2]+q[1][2]+q[2][2]+q[3][2])/4,q,shade(col,l,alpha),core,edge(col,core?0.55:0.12)]);}};
+  // 輪の10個は、軸のまわりの向きで色相を一周させる（上の段は明るく、下の段は深く）
+  const dark=matchMedia('(prefers-color-scheme: dark)').matches&&document.documentElement.dataset.theme!=='light'||document.documentElement.dataset.theme==='dark';
+  D.pts.forEach((p,i)=>{const pole=ax.includes(i);const q=loc(p);
+    let col=cP;
+    if(!pole){const h=((Math.atan2(q[1],q[0])*180/Math.PI)+360)%360;col=hsl(h,0.68,q[2]>0?(dark?0.62:0.58):(dark?0.48:0.44))}
+    addRT(p,col,pole?0.8:0.95,true)});
+  if(showNb)for(const c of D.nb)for(const p of c)addRT(p,cG,0.1,false);
+  polys.sort((a,b)=>a[0]-b[0]);
+  cx.lineJoin='round';
+  // 軸（点線）
+  const A=P(loc(D.pts[ax[0]])),B=P(loc(D.pts[ax[1]]));
+  cx.strokeStyle=css('--axis');cx.lineWidth=Math.max(1,Wd/450);cx.setLineDash([Wd/90,Wd/120]);
+  cx.beginPath();cx.moveTo(Wd/2+A[0]*s*1.25,Hd/2+A[1]*s*1.25);cx.lineTo(Wd/2+B[0]*s*1.25,Hd/2+B[1]*s*1.25);cx.stroke();cx.setLineDash([]);
+  for(const [,q,col,core,ec] of polys){cx.beginPath();q.forEach((p,i)=>{const X=Wd/2+p[0]*s,Y=Hd/2+p[1]*s;i?cx.lineTo(X,Y):cx.moveTo(X,Y)});cx.closePath();
+    cx.fillStyle=col;cx.fill();cx.lineWidth=core?Math.max(0.6,Wd/1500):Math.max(0.4,Wd/2600);cx.strokeStyle=ec;cx.stroke()}
+  // 中心の点
+  cx.fillStyle=css('--center');cx.beginPath();cx.arc(Wd/2,Hd/2,Math.max(3,Wd/170),0,7);cx.fill();
+  cx.strokeStyle=css('--panel');cx.lineWidth=Math.max(1.5,Wd/500);cx.stroke();
+  document.getElementById('read').textContent='輪 '+(ringIdx+1)+' / 6：上の段 5・下の段 5・軸の両端 2';
+  requestAnimationFrame(draw);
+}
+requestAnimationFrame(draw);
+</script>

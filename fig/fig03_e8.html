@@ -1,0 +1,104 @@
+<title>E₈の根と二つの600胞体</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@600;800&family=Zen+Kaku+Gothic+New:wght@400;500&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* 一本の縦の流れ：題 → 動く図 → 操作 → 説明。根240本が二つの殻に分かれ、辺がつながる */
+:root{
+  --bg:#eceff4; --panel:#f8f9fb; --ink:#1b2333; --muted:#5d6779; --line:#cfd5df;
+  --root:#7b8597; --in:#c99a1e; --out:#2f62b0;
+  --f-disp:"Shippori Mincho","Hiragino Mincho ProN","Yu Mincho",serif;
+  --f-body:"Zen Kaku Gothic New","Hiragino Sans","Yu Gothic",system-ui,sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#0e131d;--panel:#151c29;--ink:#e3e8f1;--muted:#97a1b3;--line:#2a3446;--root:#9aa4b6;--in:#e8bd4a;--out:#6f9ae8;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0e131d;--panel:#151c29;--ink:#e3e8f1;--muted:#97a1b3;--line:#2a3446;--root:#9aa4b6;--in:#e8bd4a;--out:#6f9ae8;color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);line-height:1.75;margin:0;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 40px}
+.wrap{max-width:760px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+h1{font-family:var(--f-disp);font-weight:800;font-size:clamp(1.4rem,4vw,1.9rem);line-height:1.3;margin:0;text-wrap:balance}
+.stage{background:var(--panel);border:1px solid var(--line);border-radius:6px;overflow:hidden}
+canvas{display:block;width:100%;max-width:100%;aspect-ratio:1/1;touch-action:none;cursor:grab}
+.ctl{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center}
+button{font:inherit;font-size:.88rem;background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:4px;padding:6px 12px;cursor:pointer}
+button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+button:focus-visible{outline:2px solid var(--out);outline-offset:2px}
+.key{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:.82rem;color:var(--muted)}
+.key span{display:inline-flex;align-items:center;gap:6px}
+.key i{width:11px;height:11px;display:inline-block;border-radius:50%}
+.text{max-width:65ch}
+.text h2{font-family:var(--f-disp);font-weight:600;font-size:1.12rem;margin:18px 0 4px}
+.text p{margin:6px 0}
+</style>
+<div class="wrap">
+<h1>E₈の根と二つの600胞体</h1>
+<div class="stage">
+  <canvas id="cv" width="900" height="900" aria-label="E₈の根240本が4次元で二つの600胞体に分かれ、大きさがφ倍違う図"></canvas>
+</div>
+<div class="ctl">
+  <button id="play" aria-pressed="true">再生</button>
+  <button id="step">次の段</button>
+  <button id="rot" aria-pressed="true">4次元で回す</button>
+</div>
+<div class="key">
+  <span><i style="background:var(--root)"></i>E₈の根（240本）</span>
+  <span><i style="background:var(--in)"></i>600胞体（半径 1）</span>
+  <span><i style="background:var(--out)"></i>600胞体（半径 φ）</span>
+</div>
+<div class="text">
+<h2>何を見ているか</h2>
+<p>単位イコシアン（成分が a＋bφ の四元数で、長さ 1 のもの）は 120 個あります。この 120 個とその φ 倍の 120 個から、8次元の格子 E₈ ができます。図の 240 点は、E₈ のいちばん短いベクトル（根）を4次元の側に写したものです。</p>
+<p>再生すると、240 本の根が長さで二つに分かれます。半径 1 の 120 点（金）と半径 φ の 120 点（青）です。どちらの 120 点も、各点がちょうど 12 本の辺で隣とつながる 600胞体です。二つの600胞体は大きさがちょうど φ 倍違い、外の殻は内の殻の拡大になっています。</p>
+<p>4次元の図形を、二つの面で同時に回しながら3次元に写し、さらに画面に描いています。回すと、立体の影は形を変えますが、辺の数と点の数は変わりません。</p>
+<h2>確かめ方</h2>
+<p>格子が E₈ であることは、整数の基底 8 本のグラム行列が整数・正定値・偶で、行列式が 1 であることで確かめました。長さの比較はすべて a＋bφ の整数で行い、小数にしたのは画面に置くところだけです。</p>
+</div>
+</div>
+<script>
+const D={"u":[[[-1,0],[-1,0],[-1,0],[-1,0]],[[-1,0],[-1,0],[-1,0],[1,0]],[[-1,0],[-1,0],[1,0],[-1,0]],[[-1,0],[-1,0],[1,0],[1,0]],[[-1,0],[-1,1],[0,1],[0,0]],[[-1,0],[-1,1],[0,-1],[0,0]],[[-1,0],[0,0],[-1,1],[0,1]],[[-1,0],[0,0],[-1,1],[0,-1]],[[-1,0],[0,0],[1,-1],[0,1]],[[-1,0],[0,0],[1,-1],[0,-1]],[[-1,0],[0,1],[0,0],[-1,1]],[[-1,0],[0,1],[0,0],[1,-1]],[[-1,0],[0,-1],[0,0],[-1,1]],[[-1,0],[0,-1],[0,0],[1,-1]],[[-1,0],[1,0],[-1,0],[-1,0]],[[-1,0],[1,0],[-1,0],[1,0]],[[-1,0],[1,0],[1,0],[-1,0]],[[-1,0],[1,0],[1,0],[1,0]],[[-1,0],[1,-1],[0,1],[0,0]],[[-1,0],[1,-1],[0,-1],[0,0]],[[-1,1],[-1,0],[0,0],[0,1]],[[-1,1],[-1,0],[0,0],[0,-1]],[[-1,1],[0,0],[0,1],[-1,0]],[[-1,1],[0,0],[0,1],[1,0]],[[-1,1],[0,0],[0,-1],[-1,0]],[[-1,1],[0,0],[0,-1],[1,0]],[[-1,1],[0,1],[-1,0],[0,0]],[[-1,1],[0,1],[1,0],[0,0]],[[-1,1],[0,-1],[-1,0],[0,0]],[[-1,1],[0,-1],[1,0],[0,0]],[[-1,1],[1,0],[0,0],[0,1]],[[-1,1],[1,0],[0,0],[0,-1]],[[-2,0],[0,0],[0,0],[0,0]],[[0,0],[-1,0],[0,1],[-1,1]],[[0,0],[-1,0],[0,1],[1,-1]],[[0,0],[-1,0],[0,-1],[-1,1]],[[0,0],[-1,0],[0,-1],[1,-1]],[[0,0],[-1,1],[-1,0],[0,1]],[[0,0],[-1,1],[-1,0],[0,-1]],[[0,0],[-1,1],[1,0],[0,1]],[[0,0],[-1,1],[1,0],[0,-1]],[[0,0],[-2,0],[0,0],[0,0]],[[0,0],[0,0],[-2,0],[0,0]],[[0,0],[0,0],[0,0],[-2,0]],[[0,0],[0,0],[0,0],[2,0]],[[0,0],[0,0],[2,0],[0,0]],[[0,0],[0,1],[-1,1],[-1,0]],[[0,0],[0,1],[-1,1],[1,0]],[[0,0],[0,1],[1,-1],[-1,0]],[[0,0],[0,1],[1,-1],[1,0]],[[0,0],[0,-1],[-1,1],[-1,0]],[[0,0],[0,-1],[-1,1],[1,0]],[[0,0],[0,-1],[1,-1],[-1,0]],[[0,0],[0,-1],[1,-1],[1,0]],[[0,0],[1,0],[0,1],[-1,1]],[[0,0],[1,0],[0,1],[1,-1]],[[0,0],[1,0],[0,-1],[-1,1]],[[0,0],[1,0],[0,-1],[1,-1]],[[0,0],[1,-1],[-1,0],[0,1]],[[0,0],[1,-1],[-1,0],[0,-1]],[[0,0],[1,-1],[1,0],[0,1]],[[0,0],[1,-1],[1,0],[0,-1]],[[0,0],[2,0],[0,0],[0,0]],[[0,1],[-1,0],[-1,1],[0,0]],[[0,1],[-1,0],[1,-1],[0,0]],[[0,1],[-1,1],[0,0],[-1,0]],[[0,1],[-1,1],[0,0],[1,0]],[[0,1],[0,0],[-1,0],[-1,1]],[[0,1],[0,0],[-1,0],[1,-1]],[[0,1],[0,0],[1,0],[-1,1]],[[0,1],[0,0],[1,0],[1,-1]],[[0,1],[1,0],[-1,1],[0,0]],[[0,1],[1,0],[1,-1],[0,0]],[[0,1],[1,-1],[0,0],[-1,0]],[[0,1],[1,-1],[0,0],[1,0]],[[0,-1],[-1,0],[-1,1],[0,0]],[[0,-1],[-1,0],[1,-1],[0,0]],[[0,-1],[-1,1],[0,0],[-1,0]],[[0,-1],[-1,1],[0,0],[1,0]],[[0,-1],[0,0],[-1,0],[-1,1]],[[0,-1],[0,0],[-1,0],[1,-1]],[[0,-1],[0,0],[1,0],[-1,1]],[[0,-1],[0,0],[1,0],[1,-1]],[[0,-1],[1,0],[-1,1],[0,0]],[[0,-1],[1,0],[1,-1],[0,0]],[[0,-1],[1,-1],[0,0],[-1,0]],[[0,-1],[1,-1],[0,0],[1,0]],[[1,0],[-1,0],[-1,0],[-1,0]],[[1,0],[-1,0],[-1,0],[1,0]],[[1,0],[-1,0],[1,0],[-1,0]],[[1,0],[-1,0],[1,0],[1,0]],[[1,0],[-1,1],[0,1],[0,0]],[[1,0],[-1,1],[0,-1],[0,0]],[[1,0],[0,0],[-1,1],[0,1]],[[1,0],[0,0],[-1,1],[0,-1]],[[1,0],[0,0],[1,-1],[0,1]],[[1,0],[0,0],[1,-1],[0,-1]],[[1,0],[0,1],[0,0],[-1,1]],[[1,0],[0,1],[0,0],[1,-1]],[[1,0],[0,-1],[0,0],[-1,1]],[[1,0],[0,-1],[0,0],[1,-1]],[[1,0],[1,0],[-1,0],[-1,0]],[[1,0],[1,0],[-1,0],[1,0]],[[1,0],[1,0],[1,0],[-1,0]],[[1,0],[1,0],[1,0],[1,0]],[[1,0],[1,-1],[0,1],[0,0]],[[1,0],[1,-1],[0,-1],[0,0]],[[1,-1],[-1,0],[0,0],[0,1]],[[1,-1],[-1,0],[0,0],[0,-1]],[[1,-1],[0,0],[0,1],[-1,0]],[[1,-1],[0,0],[0,1],[1,0]],[[1,-1],[0,0],[0,-1],[-1,0]],[[1,-1],[0,0],[0,-1],[1,0]],[[1,-1],[0,1],[-1,0],[0,0]],[[1,-1],[0,1],[1,0],[0,0]],[[1,-1],[0,-1],[-1,0],[0,0]],[[1,-1],[0,-1],[1,0],[0,0]],[[1,-1],[1,0],[0,0],[0,1]],[[1,-1],[1,0],[0,0],[0,-1]],[[2,0],[0,0],[0,0],[0,0]]]};
+const PH=(1+Math.sqrt(5))/2;   // 観察者側の表示：a+bφ を画面の座標にする（2倍の座標なので半分にする）
+const U=D.u.map(q=>q.map(([a,b])=>(a+b*PH)/2));
+const PTS=[...U.map(p=>({p,k:0})),...U.map(p=>({p:p.map(x=>x*PH),k:1}))];
+function edges(S){const E=[];let m=1e9;for(let i=0;i<S.length;i++)for(let j=i+1;j<S.length;j++){const d=S[i].reduce((s,x,t)=>s+(x-S[j][t])**2,0);if(d<m-1e-9)m=d}
+  for(let i=0;i<S.length;i++)for(let j=i+1;j<S.length;j++){const d=S[i].reduce((s,x,t)=>s+(x-S[j][t])**2,0);if(Math.abs(d-m)<1e-9)E.push([i,j])}return E}
+const E0=edges(U),E1=E0;   // 外の殻は φ 倍なので同じ組
+const cv=document.getElementById('cv'),cx=cv.getContext('2d');
+const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const STEPS=['E₈の根 240 本（長さ² 2）','長さで二つに分かれる：120 本と 120 本','内の 120 点は600胞体（辺 720）','外の 120 点も600胞体で、大きさは φ 倍'];
+let st=0,t0=0,play=true,rot=true,a=0,b=0,az=0.5,tilt=0.35,drag=null;
+if(matchMedia('(prefers-reduced-motion: reduce)').matches){play=false;rot=false;st=3;
+  document.getElementById('play').setAttribute('aria-pressed','false');document.getElementById('rot').setAttribute('aria-pressed','false')}
+document.getElementById('play').onclick=e=>{play=!play;e.target.setAttribute('aria-pressed',play)};
+document.getElementById('step').onclick=()=>{st=(st+1)%4;t0=performance.now()};
+document.getElementById('rot').onclick=e=>{rot=!rot;e.target.setAttribute('aria-pressed',rot)};
+cv.addEventListener('pointerdown',e=>{drag={x:e.clientX,y:e.clientY,az,tilt};cv.setPointerCapture(e.pointerId)});
+cv.addEventListener('pointermove',e=>{if(!drag)return;az=drag.az+(e.clientX-drag.x)*0.01;tilt=Math.max(-1.4,Math.min(1.4,drag.tilt+(e.clientY-drag.y)*0.01))});
+cv.addEventListener('pointerup',()=>drag=null);
+function P(v){ // 4次元で二つの面（x-w と y-z）を回し、w を落として3次元、さらに画面へ
+  const ca=Math.cos(a),sa=Math.sin(a),cb=Math.cos(b),sb=Math.sin(b);
+  let x=v[0]*ca-v[3]*sa,w=v[0]*sa+v[3]*ca,y=v[1]*cb-v[2]*sb,z=v[1]*sb+v[2]*cb;
+  const k=3.2/(3.2-w*0.45);x*=k;y*=k;z*=k;
+  const c1=Math.cos(az),s1=Math.sin(az),c2=Math.cos(tilt),s2=Math.sin(tilt);
+  const X=x*c1-y*s1,Y=x*s1+y*c1;return[X,Y*c2-z*s2,Y*s2+z*c2]}
+function draw(now){
+  if(play&&now-t0>3600){st=(st+1)%4;t0=now}
+  if(rot&&!drag){a+=0.004;b+=0.0025}
+  const W=cv.width;cx.clearRect(0,0,W,W);const s=W*0.24,o=W/2;
+  const Q=PTS.map(q=>P(q.p));
+  const segs=[];
+  if(st>=2)for(const [i,j] of E0)segs.push([i,j,'--in']);
+  if(st>=3)for(const [i,j] of E1)segs.push([i+120,j+120,'--out']);
+  const zmin=-2.6,zr=5.2;
+  segs.sort((u,v)=>(Q[u[0]][2]+Q[u[1]][2])-(Q[v[0]][2]+Q[v[1]][2]));
+  cx.lineCap='round';
+  for(const [i,j,c] of segs){const z=((Q[i][2]+Q[j][2])/2-zmin)/zr;cx.strokeStyle=css(c);cx.globalAlpha=0.15+0.55*z;cx.lineWidth=c==='--out'?1.4:1.8;
+    cx.beginPath();cx.moveTo(o+Q[i][0]*s,o+Q[i][1]*s);cx.lineTo(o+Q[j][0]*s,o+Q[j][1]*s);cx.stroke()}
+  const ord=[...Q.keys()].sort((i,j)=>Q[i][2]-Q[j][2]);
+  for(const i of ord){const z=(Q[i][2]-zmin)/zr;cx.globalAlpha=0.35+0.65*z;cx.fillStyle=css(st===0?'--root':(PTS[i].k?'--out':'--in'));
+    cx.beginPath();cx.arc(o+Q[i][0]*s,o+Q[i][1]*s,W/170+W/260*z,0,7);cx.fill()}
+  cx.globalAlpha=1;cx.fillStyle=css('--ink');cx.font='500 26px '+css('--f-mono');cx.fillText(STEPS[st],22,42);
+  requestAnimationFrame(draw);
+}
+requestAnimationFrame(draw);
+</script>

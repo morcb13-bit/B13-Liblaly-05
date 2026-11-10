@@ -1,0 +1,101 @@
+<title>窓の梯子</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@600;800&family=Zen+Kaku+Gothic+New:wght@400;500&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* 一本の縦の流れ：題 → 動く図（600胞体 → ひし形30面体 → 五角形） → 操作 → 説明 */
+:root{
+  --bg:#eceff4; --panel:#f8f9fb; --ink:#1b2333; --muted:#5d6779; --line:#cfd5df;
+  --faint:#aab2c0; --dode:#2f62b0; --ico:#c0452e; --pent:#c99a1e; --pent2:#2f8a55;
+  --f-disp:"Shippori Mincho","Hiragino Mincho ProN","Yu Mincho",serif;
+  --f-body:"Zen Kaku Gothic New","Hiragino Sans","Yu Gothic",system-ui,sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#0e131d;--panel:#151c29;--ink:#e3e8f1;--muted:#97a1b3;--line:#2a3446;--faint:#4b566b;--dode:#6f9ae8;--ico:#ec7a62;--pent:#e8bd4a;--pent2:#5cc086;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0e131d;--panel:#151c29;--ink:#e3e8f1;--muted:#97a1b3;--line:#2a3446;--faint:#4b566b;--dode:#6f9ae8;--ico:#ec7a62;--pent:#e8bd4a;--pent2:#5cc086;color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);line-height:1.75;margin:0;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 40px}
+.wrap{max-width:760px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+h1{font-family:var(--f-disp);font-weight:800;font-size:clamp(1.4rem,4vw,1.9rem);line-height:1.3;margin:0;text-wrap:balance}
+.stage{background:var(--panel);border:1px solid var(--line);border-radius:6px;overflow:hidden}
+canvas{display:block;width:100%;max-width:100%;aspect-ratio:1/1}
+.ctl{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center}
+button{font:inherit;font-size:.88rem;background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:4px;padding:6px 12px;cursor:pointer}
+button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+button:focus-visible{outline:2px solid var(--dode);outline-offset:2px}
+.text{max-width:65ch}
+.text h2{font-family:var(--f-disp);font-weight:600;font-size:1.12rem;margin:18px 0 4px}
+.text p{margin:6px 0}
+</style>
+<div class="wrap">
+<h1>窓の梯子</h1>
+<div class="stage"><canvas id="cv" width="900" height="900" aria-label="600胞体の二枚の切り口からひし形30面体が、ひし形30面体の切り口から正五角形が現れる、窓の入れ子の図"></canvas></div>
+<div class="ctl">
+  <button id="play" aria-pressed="true">再生</button>
+  <button id="step">次の段</button>
+</div>
+<div class="text">
+<h2>何を見ているか</h2>
+<p>第1〜3章で使った窓は、平面には正五角形、立体にはひし形30面体、4次元には600胞体でした。この三つは、切り口を一段下ろすと次の窓が現れる入れ子になっています。</p>
+<p>再生すると、まず600胞体（8次元から4次元への窓）を頂点の向きに段で切り、20点の段（青）とその内側の12点の段（赤）を選びます。この二枚を3次元に落として重ねると、32点のひし形30面体（6次元から立体への窓）になります。次に、ひし形30面体を5回軸の向きに段で切ると、5点ずつ正五角形に並ぶ段が6枚あります。その中には、半径がちょうど φ 倍の組があります。第1章の平面の窓、指数1の五角形と指数2の五角形の比と同じです。</p>
+<h2>確かめ方</h2>
+<p>段の点の数、二枚を重ねた32点の距離の並びがひし形30面体と同じ比であること、五角形の半径の比は、すべて a＋bφ の整数で確かめました。20点の段を外側の12点の段と組むと、ひし形30面体にはなりません。小数にしたのは、画面に置くところだけです。</p>
+</div>
+</div>
+<script>
+const D={"u":[[[-1,0],[-1,0],[-1,0],[-1,0]],[[-1,0],[-1,0],[-1,0],[1,0]],[[-1,0],[-1,0],[1,0],[-1,0]],[[-1,0],[-1,0],[1,0],[1,0]],[[-1,0],[-1,1],[0,1],[0,0]],[[-1,0],[-1,1],[0,-1],[0,0]],[[-1,0],[0,0],[-1,1],[0,1]],[[-1,0],[0,0],[-1,1],[0,-1]],[[-1,0],[0,0],[1,-1],[0,1]],[[-1,0],[0,0],[1,-1],[0,-1]],[[-1,0],[0,1],[0,0],[-1,1]],[[-1,0],[0,1],[0,0],[1,-1]],[[-1,0],[0,-1],[0,0],[-1,1]],[[-1,0],[0,-1],[0,0],[1,-1]],[[-1,0],[1,0],[-1,0],[-1,0]],[[-1,0],[1,0],[-1,0],[1,0]],[[-1,0],[1,0],[1,0],[-1,0]],[[-1,0],[1,0],[1,0],[1,0]],[[-1,0],[1,-1],[0,1],[0,0]],[[-1,0],[1,-1],[0,-1],[0,0]],[[-1,1],[-1,0],[0,0],[0,1]],[[-1,1],[-1,0],[0,0],[0,-1]],[[-1,1],[0,0],[0,1],[-1,0]],[[-1,1],[0,0],[0,1],[1,0]],[[-1,1],[0,0],[0,-1],[-1,0]],[[-1,1],[0,0],[0,-1],[1,0]],[[-1,1],[0,1],[-1,0],[0,0]],[[-1,1],[0,1],[1,0],[0,0]],[[-1,1],[0,-1],[-1,0],[0,0]],[[-1,1],[0,-1],[1,0],[0,0]],[[-1,1],[1,0],[0,0],[0,1]],[[-1,1],[1,0],[0,0],[0,-1]],[[-2,0],[0,0],[0,0],[0,0]],[[0,0],[-1,0],[0,1],[-1,1]],[[0,0],[-1,0],[0,1],[1,-1]],[[0,0],[-1,0],[0,-1],[-1,1]],[[0,0],[-1,0],[0,-1],[1,-1]],[[0,0],[-1,1],[-1,0],[0,1]],[[0,0],[-1,1],[-1,0],[0,-1]],[[0,0],[-1,1],[1,0],[0,1]],[[0,0],[-1,1],[1,0],[0,-1]],[[0,0],[-2,0],[0,0],[0,0]],[[0,0],[0,0],[-2,0],[0,0]],[[0,0],[0,0],[0,0],[-2,0]],[[0,0],[0,0],[0,0],[2,0]],[[0,0],[0,0],[2,0],[0,0]],[[0,0],[0,1],[-1,1],[-1,0]],[[0,0],[0,1],[-1,1],[1,0]],[[0,0],[0,1],[1,-1],[-1,0]],[[0,0],[0,1],[1,-1],[1,0]],[[0,0],[0,-1],[-1,1],[-1,0]],[[0,0],[0,-1],[-1,1],[1,0]],[[0,0],[0,-1],[1,-1],[-1,0]],[[0,0],[0,-1],[1,-1],[1,0]],[[0,0],[1,0],[0,1],[-1,1]],[[0,0],[1,0],[0,1],[1,-1]],[[0,0],[1,0],[0,-1],[-1,1]],[[0,0],[1,0],[0,-1],[1,-1]],[[0,0],[1,-1],[-1,0],[0,1]],[[0,0],[1,-1],[-1,0],[0,-1]],[[0,0],[1,-1],[1,0],[0,1]],[[0,0],[1,-1],[1,0],[0,-1]],[[0,0],[2,0],[0,0],[0,0]],[[0,1],[-1,0],[-1,1],[0,0]],[[0,1],[-1,0],[1,-1],[0,0]],[[0,1],[-1,1],[0,0],[-1,0]],[[0,1],[-1,1],[0,0],[1,0]],[[0,1],[0,0],[-1,0],[-1,1]],[[0,1],[0,0],[-1,0],[1,-1]],[[0,1],[0,0],[1,0],[-1,1]],[[0,1],[0,0],[1,0],[1,-1]],[[0,1],[1,0],[-1,1],[0,0]],[[0,1],[1,0],[1,-1],[0,0]],[[0,1],[1,-1],[0,0],[-1,0]],[[0,1],[1,-1],[0,0],[1,0]],[[0,-1],[-1,0],[-1,1],[0,0]],[[0,-1],[-1,0],[1,-1],[0,0]],[[0,-1],[-1,1],[0,0],[-1,0]],[[0,-1],[-1,1],[0,0],[1,0]],[[0,-1],[0,0],[-1,0],[-1,1]],[[0,-1],[0,0],[-1,0],[1,-1]],[[0,-1],[0,0],[1,0],[-1,1]],[[0,-1],[0,0],[1,0],[1,-1]],[[0,-1],[1,0],[-1,1],[0,0]],[[0,-1],[1,0],[1,-1],[0,0]],[[0,-1],[1,-1],[0,0],[-1,0]],[[0,-1],[1,-1],[0,0],[1,0]],[[1,0],[-1,0],[-1,0],[-1,0]],[[1,0],[-1,0],[-1,0],[1,0]],[[1,0],[-1,0],[1,0],[-1,0]],[[1,0],[-1,0],[1,0],[1,0]],[[1,0],[-1,1],[0,1],[0,0]],[[1,0],[-1,1],[0,-1],[0,0]],[[1,0],[0,0],[-1,1],[0,1]],[[1,0],[0,0],[-1,1],[0,-1]],[[1,0],[0,0],[1,-1],[0,1]],[[1,0],[0,0],[1,-1],[0,-1]],[[1,0],[0,1],[0,0],[-1,1]],[[1,0],[0,1],[0,0],[1,-1]],[[1,0],[0,-1],[0,0],[-1,1]],[[1,0],[0,-1],[0,0],[1,-1]],[[1,0],[1,0],[-1,0],[-1,0]],[[1,0],[1,0],[-1,0],[1,0]],[[1,0],[1,0],[1,0],[-1,0]],[[1,0],[1,0],[1,0],[1,0]],[[1,0],[1,-1],[0,1],[0,0]],[[1,0],[1,-1],[0,-1],[0,0]],[[1,-1],[-1,0],[0,0],[0,1]],[[1,-1],[-1,0],[0,0],[0,-1]],[[1,-1],[0,0],[0,1],[-1,0]],[[1,-1],[0,0],[0,1],[1,0]],[[1,-1],[0,0],[0,-1],[-1,0]],[[1,-1],[0,0],[0,-1],[1,0]],[[1,-1],[0,1],[-1,0],[0,0]],[[1,-1],[0,1],[1,0],[0,0]],[[1,-1],[0,-1],[-1,0],[0,0]],[[1,-1],[0,-1],[1,0],[0,0]],[[1,-1],[1,0],[0,0],[0,1]],[[1,-1],[1,0],[0,0],[0,-1]],[[2,0],[0,0],[0,0],[0,0]]]};
+const PH=(1+Math.sqrt(5))/2;   // 観察者側の表示
+const U=D.u.map(q=>q.map(([a,b])=>(a+b*PH)/2));
+const hi=1/2, lo=(PH-1)/2, eps=1e-6;
+const L20=U.filter(u=>Math.abs(u[0]-hi)<eps).map(u=>u.slice(1)), L12=U.filter(u=>Math.abs(u[0]-lo)<eps).map(u=>u.slice(1));
+const RT=[...L20.map(p=>({p,k:'--dode'})),...L12.map(p=>({p,k:'--ico'}))];
+const d=(a,b)=>Math.hypot(a[0]-b[0],a[1]-b[1],a[2]-b[2]);
+let em=1e9;for(const a of L20)for(const b of L12)em=Math.min(em,d(a,b));
+const RTE=[];L20.forEach((a,i)=>L12.forEach((b,j)=>{if(Math.abs(d(a,b)-em)<1e-6)RTE.push([i,20+j])}));
+// 5回軸（12点の段の1点の向き）を縦に
+const ax=(()=>{const v=L12[0],l=Math.hypot(...v);return v.map(x=>x/l)})();
+const cr=(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]];
+let e1=cr(ax,[1,0,0]);if(Math.hypot(...e1)<0.1)e1=cr(ax,[0,1,0]);const n1=Math.hypot(...e1);e1=e1.map(x=>x/n1);const e2=cr(ax,e1);
+const loc=p=>[p[0]*e1[0]+p[1]*e1[1]+p[2]*e1[2],p[0]*e2[0]+p[1]*e2[1]+p[2]*e2[2],p[0]*ax[0]+p[1]*ax[1]+p[2]*ax[2]];
+const RTL=RT.map(q=>({...q,l:loc(q.p)}));
+const levels=[];for(const q of RTL){let f=levels.find(L=>Math.abs(L.h-q.l[2])<1e-6);if(!f){f={h:q.l[2],pts:[]};levels.push(f)}f.pts.push(q.l)}
+levels.sort((a,b)=>b.h-a.h);const pents=levels.filter(L=>L.pts.length===5).map(L=>{L.r=Math.hypot(L.pts[0][0],L.pts[0][1]);L.pts.sort((a,b)=>Math.atan2(a[1],a[0])-Math.atan2(b[1],b[0]));return L});
+let pair=null;for(const a of pents)for(const b of pents)if(!pair&&Math.abs(a.r/b.r-PH)<1e-6)pair=[b,a];
+const cv=document.getElementById('cv'),cx=cv.getContext('2d');
+const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const TXT=['8次元→4次元の窓：600胞体（120点）','頂点の向きに段で切る：20点の段と内側の12点の段','二枚を3次元に重ねる：ひし形30面体（32点）＝6次元→立体の窓','ひし形30面体を5回軸で切る：正五角形の段が6枚','半径が φ 倍の二枚：平面の窓（指数1と指数2）と同じ比'];
+let st=0,t0=0,play=true,ang=0;
+if(matchMedia('(prefers-reduced-motion: reduce)').matches){play=false;document.getElementById('play').setAttribute('aria-pressed','false')}
+document.getElementById('play').onclick=e=>{play=!play;e.target.setAttribute('aria-pressed',play)};
+document.getElementById('step').onclick=()=>{st=(st+1)%5;t0=performance.now()};
+function R3(p,tilt){const c=Math.cos(ang),s=Math.sin(ang);const x=p[0]*c-p[1]*s,y=p[0]*s+p[1]*c;const ct=Math.cos(tilt),st2=Math.sin(tilt);return[x,-(p[2]*ct)+y*st2*0.0+(-y*st2),y*ct+p[2]*st2]}
+function view(p,tilt){const c=Math.cos(ang),s=Math.sin(ang);const x=p[0]*c-p[1]*s,y=p[0]*s+p[1]*c;const ct=Math.cos(tilt),sn=Math.sin(tilt);return[x,-(p[2]*ct-y*sn),p[2]*sn+y*ct]}
+function dot(X,Y,r,col,a){cx.globalAlpha=a;cx.fillStyle=col;cx.beginPath();cx.arc(X,Y,r,0,7);cx.fill();cx.globalAlpha=1}
+function line(A,B,col,w,a){cx.globalAlpha=a;cx.strokeStyle=col;cx.lineWidth=w;cx.beginPath();cx.moveTo(...A);cx.lineTo(...B);cx.stroke();cx.globalAlpha=1}
+function draw(now){
+  if(play&&now-t0>4600){st=(st+1)%5;t0=now}
+  if(play)ang+=0.004;
+  const W=cv.width,o=W/2;cx.clearRect(0,0,W,W);
+  if(st<=1){ // 600胞体：第0成分を高さに使い、残り3成分を回して描く
+    const s=W*0.36;
+    const pts=U.map(u=>{const v=view([u[1],u[2],u[3]],0.5);return{v,h:u[0]}}).sort((a,b)=>a.v[2]-b.v[2]);
+    for(const q of pts){const sel=st===1&&(Math.abs(q.h-hi)<eps||Math.abs(q.h-lo)<eps);
+      const col=st===1?(Math.abs(q.h-hi)<eps?css('--dode'):Math.abs(q.h-lo)<eps?css('--ico'):css('--faint')):css('--faint');
+      dot(o+q.v[0]*s,o+q.v[1]*s,sel?8:5,col,st===1&&!sel?0.35:0.9)}
+  }else{
+    const s=W*0.36/Math.max(...RT.map(q=>Math.hypot(...q.p)));
+    const tilt=st>=3?1.25:0.45;
+    const V=RTL.map(q=>view(q.l,tilt));
+    const P2=v=>[o+v[0]*s,o+v[1]*s];
+    const fade=st>=3?0.18:0.6;
+    for(const [i,j] of RTE)line(P2(V[i]),P2(V[j]),css('--muted'),1.6,fade);
+    if(st>=3)for(const L of pents){const isP=pair&&(L===pair[0]||L===pair[1]);const col=st===4&&isP?(L===pair[0]?css('--pent'):css('--pent2')):css('--pent');
+      const Q=L.pts.map(p=>P2(view(p,tilt)));cx.globalAlpha=st===4&&!isP?0.2:0.9;cx.strokeStyle=col;cx.lineWidth=st===4&&isP?4:2.4;cx.beginPath();Q.forEach((q,i)=>i?cx.lineTo(...q):cx.moveTo(...q));cx.closePath();cx.stroke();cx.globalAlpha=1}
+    RTL.forEach((q,i)=>{const v=P2(V[i]);dot(v[0],v[1],7,css(q.k),st===4?0.35:0.95)});
+  }
+  cx.fillStyle=css('--ink');cx.font='500 25px '+css('--f-mono');cx.fillText(TXT[st],22,42);
+  requestAnimationFrame(draw);
+}
+requestAnimationFrame(draw);
+</script>
