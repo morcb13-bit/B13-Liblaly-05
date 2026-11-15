@@ -1,0 +1,102 @@
+<title>13の番地と26の整数</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;700&family=Shippori+Mincho:wght@600&display=swap">
+<style>
+:root{--bg:#eef1f4;--panel:#f8fafb;--ink:#1f2a33;--sub:#5a6772;--line:#d3dae0;--axis:#b8892e;
+  --display:"Shippori Mincho","Hiragino Mincho ProN",serif;--body:"Zen Kaku Gothic New","Hiragino Sans","Noto Sans JP",sans-serif}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#11171c;--panel:#172028;--ink:#e6edf2;--sub:#9aa9b5;--line:#2c3842;--axis:#e0b45c;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#11171c;--panel:#172028;--ink:#e6edf2;--sub:#9aa9b5;--line:#2c3842;--axis:#e0b45c;color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);line-height:1.75}
+.wrap{max-width:760px;margin:0 auto;padding-block:20px 40px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:14px}
+h1{font-family:var(--display);font-size:1.6rem;line-height:1.35;margin:0;text-wrap:balance;letter-spacing:.02em}
+.stage{position:relative;background:var(--panel);border:1px solid var(--line);border-radius:6px;overflow:hidden}
+canvas{display:block;width:100%;aspect-ratio:1/1;max-width:100%;touch-action:none;cursor:grab}
+.read{position:absolute;left:10px;top:8px;right:10px;font-size:.8rem;color:var(--sub);pointer-events:none}
+.ctl{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center}
+.seg{display:flex;flex-wrap:wrap;border:1px solid var(--line);border-radius:5px;overflow:hidden}
+.seg button{font:inherit;font-size:.85rem;padding:6px 11px;border:0;background:var(--panel);color:var(--ink);cursor:pointer}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+button:focus-visible{outline:2px solid var(--axis);outline-offset:2px}
+.lab{font-size:.75rem;color:var(--sub);letter-spacing:.06em}
+.text{max-width:65ch}.text h2{font-family:var(--display);font-size:1.15rem;margin:18px 0 4px}.text p{margin:6px 0}
+</style>
+<div class="wrap">
+<h1>13の番地と26の整数</h1>
+<div class="stage">
+  <canvas id="cv" width="900" height="900" aria-label="13の番地にa+bφを置いた26個の整数が、φ倍のたびに(a,b)から(b,a+b)へ書き換わり、番地0から2に置いた正二十面体が同じ形のままφ倍に育つ図"></canvas>
+  <div class="read" id="read"></div>
+</div>
+<div class="ctl">
+  <div><div class="lab">再生</div><div class="seg"><button id="run" aria-pressed="true">動かす</button><button id="step">φ倍を一回</button><button id="reset">最初に戻す</button></div></div>
+  <div><div class="lab">速さ</div><div class="seg" id="spd"><button data-v="0.5" aria-pressed="false">遅く</button><button data-v="1" aria-pressed="true">ふつう</button><button data-v="2" aria-pressed="false">速く</button></div></div>
+</div>
+<div class="text">
+<h2>何を見ているか</h2>
+<p>上の帯は 13 の番地で、どの番地にも a＋bφ が一つ置かれ、上の段が a、下の段が b です。整数で数えると 26 個です。番地 0〜2 には正二十面体の一つの頂点 (0, 1, φ) が、番地 3〜12 には 0 が置かれています。下の図は、番地 0〜2 に置いた正二十面体の12頂点です。</p>
+<h2>φ倍は整数の書き換え</h2>
+<p>φ を一回掛けるたびに、どの番地でも (a, b) が (b, a＋b) に書き換わります。26×26 の整数の行列 M で書け、行列式は −1、M² ＝ M ＋ I が整数の行列として成り立ちます。書き換えを重ねると、整数はフィボナッチ数で増えていきます。正二十面体は、整数が増えても形を変えず、大きさだけが φ 倍ずつ育ちます。図では直前の段を実寸の比で灰色に残しているので、新しい段が一つ内側の大きさから φ 倍に広がり、殻が φ 倍ずつ外へ重なっていくところが見えます。</p>
+<h2>計量は別に入れる</h2>
+<p>26 個の整数は、ただの整数の並びです。正二十面体の形が保たれるのは、長さを番地ごとの a＋bφ の積の和で測ったときです。26 個の整数をそのまま掛けて足す内積で測ると、最短の組は 30 ではなく 60 になり、正二十面体の形は出てきません。</p>
+</div>
+</div>
+<script>
+const cv=document.getElementById('cv'),cx=cv.getContext('2d');
+const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const PHI=(1+Math.sqrt(5))/2;
+let run=true,speed=1,clock=0,k=0,az=0.5,el=0.35,anim=1;
+// 整数の状態：番地ごとの (a,b)。番地0〜2 に (0,1,φ)
+function start(){return Array.from({length:13},(_,i)=>i===1?[1,0]:i===2?[0,1]:[0,0])}
+let A=start();
+// 正二十面体12頂点（番地0〜2）を (a,b) の組で
+const ICO=[];[[1,1],[1,-1],[-1,1],[-1,-1]].forEach(([s1,s2])=>{for(let c=0;c<3;c++){const v=[[0,0],[0,0],[0,0]];v[(c+1)%3]=[s1,0];v[(c+2)%3]=[0,s2];ICO.push(v)}});
+let IC=ICO.map(v=>v.map(p=>p.slice()));
+function phiStep(){A=A.map(([a,b])=>[b,a+b]);IC=IC.map(v=>v.map(([a,b])=>[b,a+b]));k++;anim=0}
+function reset(){A=start();IC=ICO.map(v=>v.map(p=>p.slice()));k=0;clock=0;anim=1}
+document.getElementById('step').onclick=()=>{if(k>=11)reset();else phiStep()};
+document.getElementById('reset').onclick=reset;
+document.querySelectorAll('#spd button').forEach(b=>b.onclick=()=>{speed=+b.dataset.v;document.querySelectorAll('#spd button').forEach(x=>x.setAttribute('aria-pressed',x===b?'true':'false'))});
+const rb=document.getElementById('run');rb.onclick=()=>{run=!run;rb.setAttribute('aria-pressed',run)};
+if(matchMedia('(prefers-reduced-motion: reduce)').matches){run=false;rb.setAttribute('aria-pressed','false')}
+let drag=null;
+cv.addEventListener('pointerdown',e=>{drag={x:e.clientX,y:e.clientY,az,el};cv.setPointerCapture(e.pointerId)});
+cv.addEventListener('pointermove',e=>{if(!drag)return;az=drag.az+(e.clientX-drag.x)*0.01;el=Math.max(-1.4,Math.min(1.4,drag.el+(e.clientY-drag.y)*0.01))});
+cv.addEventListener('pointerup',()=>drag=null);
+function val(p){return p[0]+p[1]*PHI}   // 観察者側の表示
+function view(p,S,ox,oy){const ca=Math.cos(az),sa=Math.sin(az),ce=Math.cos(el),se=Math.sin(el);
+  const x=p[0]*ca-p[1]*sa,y=p[0]*sa+p[1]*ca;return[ox+x*S,oy-(y*se+p[2]*ce)*S,-y*ce+p[2]*se]}
+function draw(){
+  const W=cv.width;cx.clearRect(0,0,W,W);const ink=css('--ink'),sub=css('--sub'),acc=css('--axis'),line=css('--line'),panel=css('--panel'),dark=css('--bg').toLowerCase()==='#11171c';
+  const blue=dark?'#6fa8ff':'#2f5fb3';
+  if(anim<1)anim+=0.02*speed;if(run&&!drag){clock+=speed;az+=0.0012*speed;if(clock>150){clock=0;if(k>=11)reset();else phiStep()}}
+  // 帯：13番地 × (a,b)
+  const x0=W*0.04,cw=(W*0.92)/13,y0=W*0.08,ch=W*0.06;
+  cx.textAlign='center';cx.textBaseline='middle';
+  for(let i=0;i<13;i++){const used=i<3;
+    for(let r=0;r<2;r++){cx.fillStyle=used?(r===0?(dark?'#2a3540':'#e4ebf2'):(dark?'#33291a':'#f6ecd9')):panel;cx.fillRect(x0+i*cw+1,y0+r*ch+1,cw-2,ch-2);
+      cx.strokeStyle=line;cx.strokeRect(x0+i*cw+1,y0+r*ch+1,cw-2,ch-2);
+      const n=A[i][r];cx.fillStyle=n===0?sub:ink;cx.font=`${Math.min(W/38,cw*0.5)}px sans-serif`;cx.fillText(String(n),x0+i*cw+cw/2,y0+r*ch+ch/2)}
+    cx.fillStyle=sub;cx.font=`${W/60}px sans-serif`;cx.fillText(String(i),x0+i*cw+cw/2,y0+2*ch+W*0.02)}
+  cx.textAlign='left';cx.fillStyle=sub;cx.font=`${W/55}px sans-serif`;cx.fillText('上の段 a ／ 下の段 b ／ 下の数字は番地',x0,y0+2*ch+W*0.055);
+  // 正二十面体：直前の段を実寸の比で重ねる。新しい段は一つ内側の大きさから φ 倍に広がる
+  const g=Math.min(1,anim);const ease=1-Math.pow(1-g,3);
+  const Rout=W*0.25, cx0=W/2, cy0=W*0.62;
+  const base=ICO.map(v=>v.map(val));const R0=Math.hypot(...base[0]);
+  const edges=[];for(let i=0;i<12;i++)for(let j=i+1;j<12;j++){const d=Math.hypot(base[i][0]-base[j][0],base[i][1]-base[j][1],base[i][2]-base[j][2]);edges.push([d,i,j])}
+  const mn=Math.min(...edges.map(x=>x[0]));const E=edges.filter(x=>x[0]<mn*1.01);
+  const levels=[];for(let j=Math.max(0,k-3);j<=k;j++)levels.push(j);
+  levels.forEach(j=>{const sc=Rout/R0*Math.pow(PHI,j-k)*Math.pow(PHI,-(1-ease));
+    const Q=base.map(p=>view(p,sc,cx0,cy0));const newest=j===k;
+    const al=newest?1:Math.max(0.15,0.6*Math.pow(0.55,k-1-j));
+    cx.globalAlpha=al;cx.strokeStyle=newest?blue:sub;cx.lineWidth=newest?W/300:W/500;
+    for(const [,a,b] of E){cx.beginPath();cx.moveTo(Q[a][0],Q[a][1]);cx.lineTo(Q[b][0],Q[b][1]);cx.stroke()}
+    Q.forEach((q,i)=>{cx.fillStyle=newest?(i===0?acc:blue):sub;cx.beginPath();cx.arc(q[0],q[1],newest?W/(i===0?80:130):W/260,0,7);cx.fill()});
+    cx.globalAlpha=1;
+    if(!newest||ease>=1){const lab=view(base[0],sc,cx0,cy0);cx.fillStyle=newest?acc:sub;cx.font=`${W/(newest?42:55)}px sans-serif`;cx.textAlign='left';cx.fillText(`φ^${j}`,lab[0]+W*0.015,lab[1]-W*0.012)}});
+  cx.textAlign='right';cx.fillStyle=ink;cx.font=`${W/34}px sans-serif`;cx.fillText(`いちばん外が φ^${k} 倍`,W*0.95,W*0.36);
+  cx.fillStyle=sub;cx.font=`${W/50}px sans-serif`;cx.fillText('一つ内側の殻とは、ちょうど φ 倍の大きさ',W*0.95,W*0.40);
+  document.getElementById('read').textContent=`φ を ${k} 回掛けた：番地 0〜2 の整数は (a,b)→(b,a+b) の書き換えだけで決まる`;
+  requestAnimationFrame(draw)}
+requestAnimationFrame(draw);
+</script>

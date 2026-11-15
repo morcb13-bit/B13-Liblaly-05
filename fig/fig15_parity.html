@@ -1,0 +1,90 @@
+<title>回転で裏返す立方体</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;700&family=Shippori+Mincho:wght@600&display=swap">
+<style>
+:root{--bg:#eef1f4;--panel:#f8fafb;--ink:#1f2a33;--sub:#5a6772;--line:#d3dae0;--axis:#b8892e;
+  --display:"Shippori Mincho","Hiragino Mincho ProN",serif;--body:"Zen Kaku Gothic New","Hiragino Sans","Noto Sans JP",sans-serif}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#11171c;--panel:#172028;--ink:#e6edf2;--sub:#9aa9b5;--line:#2c3842;--axis:#e0b45c;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#11171c;--panel:#172028;--ink:#e6edf2;--sub:#9aa9b5;--line:#2c3842;--axis:#e0b45c;color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);line-height:1.75}
+.wrap{max-width:760px;margin:0 auto;padding-block:20px 40px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:14px}
+h1{font-family:var(--display);font-size:1.6rem;line-height:1.35;margin:0;text-wrap:balance;letter-spacing:.02em}
+.stage{position:relative;background:var(--panel);border:1px solid var(--line);border-radius:6px;overflow:hidden}
+canvas{display:block;width:100%;aspect-ratio:1/1;max-width:100%;touch-action:none;cursor:grab}
+.read{position:absolute;left:10px;top:8px;right:10px;font-size:.8rem;color:var(--sub);pointer-events:none}
+.ctl{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center}
+.seg{display:flex;flex-wrap:wrap;border:1px solid var(--line);border-radius:5px;overflow:hidden}
+.seg button{font:inherit;font-size:.85rem;padding:6px 11px;border:0;background:var(--panel);color:var(--ink);cursor:pointer}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+button:focus-visible{outline:2px solid var(--axis);outline-offset:2px}
+.lab{font-size:.75rem;color:var(--sub);letter-spacing:.06em}
+.text{max-width:65ch}.text h2{font-family:var(--display);font-size:1.15rem;margin:18px 0 4px}.text p{margin:6px 0}
+</style>
+<div class="wrap">
+<h1>回転で裏返す立方体</h1>
+<div class="stage">
+  <canvas id="cv" width="900" height="900" aria-label="立方体を二つずつの面で半回転させ、すべての頂点が向かいに届くかを、2次元から5次元で比べる図"></canvas>
+  <div class="read" id="read"></div>
+</div>
+<div class="ctl">
+  <div><div class="lab">次元</div><div class="seg" id="dim">
+    <button data-v="2" aria-pressed="true">2次元</button><button data-v="3" aria-pressed="false">3次元</button><button data-v="4" aria-pressed="false">4次元</button><button data-v="5" aria-pressed="false">5次元</button></div></div>
+  <div><div class="lab">再生</div><div class="seg"><button id="run" aria-pressed="true">動かす</button><button id="auto" aria-pressed="true">順に</button></div></div>
+  <div><div class="lab">速さ</div><div class="seg" id="spd"><button data-v="0.5" aria-pressed="false">遅く</button><button data-v="1" aria-pressed="true">ふつう</button><button data-v="2" aria-pressed="false">速く</button></div></div>
+</div>
+<div class="text">
+<h2>何を見ているか</h2>
+<p>立方体の座標を二つずつ組にして、それぞれの組の面で同時に半回転（180°）させます。白い輪は、金色の頂点の向かいの位置です。偶数の次元では座標がちょうど組になり、半回転が終わると、どの頂点も向かいの位置に届きます。立方体は回転だけで裏返ります。</p>
+<h2>奇数の次元では軸が残る</h2>
+<p>奇数の次元では、組にならない座標が一つ残ります。その向きは回らないので、半回転が終わっても、どの頂点も向かいには届きません。灰色の線が、回らずに残る軸です。3次元の立方体を回転だけで裏返すことはできず、鏡に映すしかありません。</p>
+<h2>数えて確かめたこと</h2>
+<p>立方体を自分に重ねる回転のうち、動かない向きが一つもないものは、11次元まで数えて、偶数の次元にだけありました。数え方は ±1 を置いた置換の行列で、判定は整数だけです。動く図の中の「向かいに届いた頂点」も、回転を終えた頂点の ±1 の列と、向かいの列を比べて数えています。</p>
+</div>
+</div>
+<script>
+const cv=document.getElementById('cv'),cx=cv.getContext('2d');
+const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+let dim=2,run=true,auto=true,speed=1,ph=0,az=0.55,el=0.35;
+function press(g,v){document.querySelectorAll('#'+g+' button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.v===String(v)?'true':'false'))}
+function setDim(d){dim=d;ph=0;press('dim',d)}
+document.querySelectorAll('#dim button').forEach(b=>b.onclick=()=>{setDim(+b.dataset.v);auto=false;ab.setAttribute('aria-pressed','false')});
+document.querySelectorAll('#spd button').forEach(b=>b.onclick=()=>{speed=+b.dataset.v;press('spd',b.dataset.v)});
+const rb=document.getElementById('run');rb.onclick=()=>{run=!run;rb.setAttribute('aria-pressed',run)};
+const ab=document.getElementById('auto');ab.onclick=()=>{auto=!auto;ab.setAttribute('aria-pressed',auto)};
+if(matchMedia('(prefers-reduced-motion: reduce)').matches){run=false;rb.setAttribute('aria-pressed','false')}
+let drag=null;
+cv.addEventListener('pointerdown',e=>{drag={x:e.clientX,y:e.clientY,az,el};cv.setPointerCapture(e.pointerId)});
+cv.addEventListener('pointermove',e=>{if(!drag)return;az=drag.az+(e.clientX-drag.x)*0.01;el=Math.max(-1.4,Math.min(1.4,drag.el+(e.clientY-drag.y)*0.01))});
+cv.addEventListener('pointerup',()=>drag=null);
+function cube(n){const V=[];for(let m=0;m<(1<<n);m++){const v=[];for(let i=0;i<n;i++)v.push(m>>i&1?-1:1);V.push(v)}
+  const E=[];for(let a=0;a<V.length;a++)for(let b=a+1;b<V.length;b++){let d=0;for(let i=0;i<n;i++)if(V[a][i]!==V[b][i])d++;if(d===1)E.push([a,b])}return{V,E}}
+const C={2:cube(2),3:cube(3),4:cube(4),5:cube(5)};
+// 半回転を終えた列（整数）：組になった座標は符号が反転、残った座標はそのまま
+function endInt(v){const n=v.length,m=n-(n%2);return v.map((x,i)=>i<m?-x:x)}
+function reached(n){return C[n].V.filter(v=>endInt(v).every((x,i)=>x===-v[i])).length}
+// 観察者側の表示
+const AX={2:[[1,0,0],[0,0,1]],3:[[1,0,0],[0,1,0],[0,0,1]],4:[[1,0,0],[0,1,0],[0,0,1],[0.45,0.38,0.3]],5:[[1,0,0],[0,1,0],[0,0,1],[0.45,0.38,0.3],[-0.32,0.45,-0.35]]};
+function rot(v,a){const q=v.slice();for(let i=0;i+1<q.length;i+=2){const x=q[i]*Math.cos(a)-q[i+1]*Math.sin(a),y=q[i]*Math.sin(a)+q[i+1]*Math.cos(a);q[i]=x;q[i+1]=y}return q}
+function to3(p,n){const q=[0,0,0];for(let i=0;i<n;i++)for(let k=0;k<3;k++)q[k]+=p[i]*AX[n][i][k];return q}
+function view(p){const W=cv.width,S=W*0.2,ca=Math.cos(az),sa=Math.sin(az),ce=Math.cos(el),se=Math.sin(el);
+  const x=p[0]*ca-p[1]*sa,y=p[0]*sa+p[1]*ca;const yy=y*se+p[2]*ce,zz=-y*ce+p[2]*se;const k=4.5/(4.5-zz*0.4);return[W/2+x*S*k,W/2-yy*S*k]}
+function draw(){
+  const W=cv.width;cx.clearRect(0,0,W,W);const ink=css('--ink'),acc=css('--axis'),sub=css('--sub'),line=css('--line');
+  if(run&&!drag){ph+=0.005*speed}
+  if(auto&&ph>2.6)setDim(dim===5?2:dim+1);
+  const n=dim,{V,E}=C[n];const s=Math.min(1,Math.max(0,ph-0.3)/1.4);const a=Math.PI*(0.5-0.5*Math.cos(Math.PI*s));
+  const ghost=V.map(v=>view(to3(v,n)));
+  cx.strokeStyle=line;cx.lineWidth=W/500;for(const [i,j] of E){cx.beginPath();cx.moveTo(ghost[i][0],ghost[i][1]);cx.lineTo(ghost[j][0],ghost[j][1]);cx.stroke()}
+  if(n%2===1){const ax=new Array(n).fill(0);ax[n-1]=1.6;const A=view(to3(ax,n)),B=view(to3(ax.map(x=>-x),n));cx.setLineDash([8,6]);cx.strokeStyle=sub;cx.lineWidth=W/350;cx.beginPath();cx.moveTo(A[0],A[1]);cx.lineTo(B[0],B[1]);cx.stroke();cx.setLineDash([])}
+  const P=V.map(v=>view(to3(rot(v,a),n)));
+  cx.strokeStyle=ink;cx.lineWidth=W/260;for(const [i,j] of E){cx.beginPath();cx.moveTo(P[i][0],P[i][1]);cx.lineTo(P[j][0],P[j][1]);cx.stroke()}
+  P.forEach((p,i)=>{cx.fillStyle=i===0?acc:ink;cx.beginPath();cx.arc(p[0],p[1],W/(i===0?90:170),0,7);cx.fill()});
+  const T=view(to3(V[0].map(x=>-x),n));cx.strokeStyle=css('--panel')==='#f8fafb'?'#ffffff':css('--ink');cx.lineWidth=W/300;
+  cx.strokeStyle=acc;cx.globalAlpha=0.6;cx.beginPath();cx.arc(T[0],T[1],W/45,0,7);cx.stroke();cx.globalAlpha=1;
+  const done=s>=1;const k=done?reached(n):0;
+  document.getElementById('read').textContent=`${n}次元：二つずつの面で ${Math.round(a*180/Math.PI)}° 回転`+(done?`／向かいに届いた頂点 ${k} / ${V.length}`+(n%2?'（回らない軸が残る）':'（回転だけで裏返った）'):'');
+  requestAnimationFrame(draw)}
+requestAnimationFrame(draw);
+</script>

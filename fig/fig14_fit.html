@@ -1,0 +1,99 @@
+<title>立方体に嵌る正単体</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;700&family=Shippori+Mincho:wght@600&display=swap">
+<style>
+:root{--bg:#eef1f4;--panel:#f8fafb;--ink:#1f2a33;--sub:#5a6772;--line:#d3dae0;--axis:#b8892e;
+  --display:"Shippori Mincho","Hiragino Mincho ProN",serif;--body:"Zen Kaku Gothic New","Hiragino Sans","Noto Sans JP",sans-serif}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#11171c;--panel:#172028;--ink:#e6edf2;--sub:#9aa9b5;--line:#2c3842;--axis:#e0b45c;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#11171c;--panel:#172028;--ink:#e6edf2;--sub:#9aa9b5;--line:#2c3842;--axis:#e0b45c;color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);line-height:1.75}
+.wrap{max-width:760px;margin:0 auto;padding-block:20px 40px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:14px}
+h1{font-family:var(--display);font-size:1.6rem;line-height:1.35;margin:0;text-wrap:balance;letter-spacing:.02em}
+.stage{position:relative;background:var(--panel);border:1px solid var(--line);border-radius:6px;overflow:hidden}
+canvas{display:block;width:100%;aspect-ratio:1/1;max-width:100%;touch-action:none;cursor:grab}
+.read{position:absolute;left:10px;top:8px;right:10px;font-size:.8rem;color:var(--sub);pointer-events:none}
+.ctl{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center}
+.seg{display:flex;flex-wrap:wrap;border:1px solid var(--line);border-radius:5px;overflow:hidden}
+.seg button{font:inherit;font-size:.85rem;padding:6px 11px;border:0;background:var(--panel);color:var(--ink);cursor:pointer}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+button:focus-visible{outline:2px solid var(--axis);outline-offset:2px}
+.lab{font-size:.75rem;color:var(--sub);letter-spacing:.06em}
+.text{max-width:65ch}.text h2{font-family:var(--display);font-size:1.15rem;margin:18px 0 4px}.text p{margin:6px 0}
+</style>
+<div class="wrap">
+<h1>立方体に嵌る正単体</h1>
+<div class="stage">
+  <canvas id="cv" width="900" height="900" aria-label="正四面体が中心から育って立方体の頂点に嵌る様子と、7次元・11次元で立方体の頂点に嵌る正単体の頂点の列"></canvas>
+  <div class="read" id="read"></div>
+</div>
+<div class="ctl">
+  <div><div class="lab">次元</div><div class="seg" id="mode">
+    <button data-v="3" aria-pressed="true">3次元：正四面体</button><button data-v="7" aria-pressed="false">7次元：8個の列</button><button data-v="11" aria-pressed="false">11次元：12個の列</button></div></div>
+  <div><div class="lab">再生</div><div class="seg"><button id="run" aria-pressed="true">動かす</button><button id="auto" aria-pressed="true">順に</button></div></div>
+  <div><div class="lab">速さ</div><div class="seg" id="spd"><button data-v="0.5" aria-pressed="false">遅く</button><button data-v="1" aria-pressed="true">ふつう</button><button data-v="2" aria-pressed="false">速く</button></div></div>
+</div>
+<div class="text">
+<h2>3次元：正四面体が嵌る</h2>
+<p>立方体の中心から正四面体が育っていき、大きさがちょうど揃ったところで、4つの頂点が立方体の一つおきの頂点にカチリと嵌ります。残りの4頂点にも、もう一つの正四面体が嵌ります。正四面体の辺は、立方体の面の対角線です。</p>
+<h2>7次元・11次元：頂点の列</h2>
+<p>7次元の立方体の頂点は ＋ と − を7つ並べた列です。表の8行は、どの2行を比べても、ちょうど4か所が違います。8個の頂点がどれも同じ距離で、7次元の正単体が立方体の頂点に嵌っています。11次元では12行で、どの2行もちょうど6か所が違います。光っている2行の、違う場所に印が付きます。</p>
+<h2>嵌る次元と嵌らない次元</h2>
+<p>8次元までを全部数えると、正単体が立方体の頂点に嵌るのは 1, 3, 7 次元だけでした。11次元でも一つ見つかります。判定はすべて ＋・− の列の比較（違う場所の数）だけで行っています。</p>
+</div>
+</div>
+<script>
+const R={"7": ["+++++++", "+++----", "+--++--", "+----++", "-+-+-+-", "-+--+-+", "--++--+", "--+-++-"], "11": ["+++++++++++", "+++++------", "++---+++---", "+-+--+--++-", "+--+--+-+-+", "+---+--+-++", "-++---+--++", "-+-+---+++-", "-+--++--+-+", "--++-+-+--+", "--+-+-+++--", "---++++--+-"]};
+const cv=document.getElementById('cv'),cx=cv.getContext('2d');
+const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+let mode='3',run=true,auto=true,speed=1,ph=0,az=0.6,el=0.42,pi=0,pj=1,pc=0;
+function press(g,v){document.querySelectorAll('#'+g+' button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.v===String(v)?'true':'false'))}
+function setMode(m){mode=m;ph=0;pi=0;pj=1;press('mode',m)}
+document.querySelectorAll('#mode button').forEach(b=>b.onclick=()=>{setMode(b.dataset.v);auto=false;ab.setAttribute('aria-pressed','false')});
+document.querySelectorAll('#spd button').forEach(b=>b.onclick=()=>{speed=+b.dataset.v;press('spd',b.dataset.v)});
+const rb=document.getElementById('run');rb.onclick=()=>{run=!run;rb.setAttribute('aria-pressed',run)};
+const ab=document.getElementById('auto');ab.onclick=()=>{auto=!auto;ab.setAttribute('aria-pressed',auto)};
+if(matchMedia('(prefers-reduced-motion: reduce)').matches){run=false;rb.setAttribute('aria-pressed','false')}
+let drag=null;
+cv.addEventListener('pointerdown',e=>{drag={x:e.clientX,y:e.clientY,az,el};cv.setPointerCapture(e.pointerId)});
+cv.addEventListener('pointermove',e=>{if(!drag)return;az=drag.az+(e.clientX-drag.x)*0.01;el=Math.max(-1.4,Math.min(1.4,drag.el+(e.clientY-drag.y)*0.01))});
+cv.addEventListener('pointerup',()=>drag=null);
+const V=[];for(let m=0;m<8;m++)V.push([m&1?-1:1,m&2?-1:1,m&4?-1:1]);
+const ham=(a,b)=>a.reduce((s,x,i)=>s+(x!==b[i]?1:0),0);
+const CE=[];for(let a=0;a<8;a++)for(let b=a+1;b<8;b++)if(ham(V[a],V[b])===1)CE.push([a,b]);
+const TA=V.map((v,i)=>i).filter(i=>V[i][0]*V[i][1]*V[i][2]===1), TB=V.map((v,i)=>i).filter(i=>V[i][0]*V[i][1]*V[i][2]===-1);
+function view(p){const W=cv.width,S=W*0.24,ca=Math.cos(az),sa=Math.sin(az),ce=Math.cos(el),se=Math.sin(el);
+  const x=p[0]*ca-p[1]*sa,y=p[0]*sa+p[1]*ca;const yy=y*se+p[2]*ce,zz=-y*ce+p[2]*se;const k=5/(5-zz*0.6);return[W/2+x*S*k,W*0.52-yy*S*k,zz]}
+function line(A,B,col,w,al){cx.globalAlpha=al;cx.strokeStyle=col;cx.lineWidth=w;cx.beginPath();cx.moveTo(A[0],A[1]);cx.lineTo(B[0],B[1]);cx.stroke();cx.globalAlpha=1}
+function dot(A,col,r){cx.fillStyle=col;cx.beginPath();cx.arc(A[0],A[1],r,0,7);cx.fill()}
+function tet(ids,s,col,W){const P=ids.map(i=>view(V[i].map(x=>x*s)));for(let a=0;a<4;a++)for(let b=a+1;b<4;b++)line(P[a],P[b],col,W/200,1);P.forEach(p=>dot(p,col,W/120))}
+function draw(){
+  const W=cv.width;cx.clearRect(0,0,W,W);const ink=css('--ink'),acc=css('--axis'),sub=css('--sub'),dark=css('--bg').toLowerCase()==='#11171c';
+  const blue=dark?'#6fa8ff':'#2f5fb3';
+  if(run&&!drag){ph+=0.006*speed;if(mode==='3')az+=0.003*speed}
+  let msg='';
+  if(mode==='3'){const g=Math.min(1,ph/1.2), g2=Math.max(0,Math.min(1,(ph-1.6)/1.2));
+    const C=V.map(v=>view(v));for(const [a,b] of CE)line(C[a],C[b],sub,W/320,0.8);C.forEach(p=>dot(p,sub,W/220));
+    const ease=x=>1-Math.pow(1-x,3);
+    tet(TA,ease(g),acc,W); if(g2>0)tet(TB,ease(g2),blue,W);
+    if(g>=1){C.filter((p,i)=>TA.includes(i)).forEach(p=>{cx.strokeStyle=acc;cx.lineWidth=W/300;cx.beginPath();cx.arc(p[0],p[1],W/55*(1+Math.max(0,0.4-(ph-1.2))*2),0,7);cx.stroke()})}
+    msg=g<1?'正四面体が中心から育つ':(g2<1?'4つの頂点が、立方体の一つおきの頂点に嵌る（辺は面の対角線、長さ² 8）':'残りの4頂点にも、もう一つの正四面体が嵌る');
+    if(auto&&ph>4.2)setMode('7');}
+  else{const rows=R[mode],n=rows[0].length,m=rows.length,d=(n+1)/2;
+    if(run&&!drag){pc+=speed;if(pc>45){pc=0;pj++;if(pj>=m){pi++;pj=pi+1;if(pi>=m-1){pi=0;pj=1;if(auto){setMode(mode==='7'?'11':'3');requestAnimationFrame(draw);return}}}}}
+    const cw=Math.min(W*0.8/n,W*0.62/m), x0=(W-cw*n)/2+cw*0.6, y0=W*0.16;
+    cx.font=`${cw*0.6}px sans-serif`;cx.textAlign='center';cx.textBaseline='middle';
+    for(let r=0;r<m;r++){const hi=(r===pi||r===pj);
+      cx.fillStyle=sub;cx.fillText(String(r+1),x0-cw*1.1,y0+r*cw+cw/2);
+      for(let c=0;c<n;c++){const diff=hi&&rows[pi][c]!==rows[pj][c];
+        cx.fillStyle=diff?acc:(hi?css('--line'):css('--panel'));cx.globalAlpha=diff?0.9:1;cx.fillRect(x0+c*cw+1,y0+r*cw+1,cw-2,cw-2);cx.globalAlpha=1;
+        cx.strokeStyle=css('--line');cx.strokeRect(x0+c*cw+1,y0+r*cw+1,cw-2,cw-2);
+        cx.fillStyle=rows[r][c]==='+'?ink:blue;cx.fillText(rows[r][c]==='+'?'＋':'−',x0+c*cw+cw/2,y0+r*cw+cw/2)}}
+    let k=0;for(let c=0;c<n;c++)if(rows[pi][c]!==rows[pj][c])k++;
+    cx.fillStyle=ink;cx.font=`${W/32}px sans-serif`;cx.fillText(`${pi+1}行目と${pj+1}行目：違う場所 ${k} か所`,W/2,y0+m*cw+W*0.07);
+    cx.fillStyle=sub;cx.font=`${W/42}px sans-serif`;cx.fillText(`どの2行も ${d} か所違う（距離² ${4*d}）`,W/2,y0+m*cw+W*0.13);
+    msg=`${n}次元の立方体の頂点 ${m} 個：${n}次元の正単体`;}
+  document.getElementById('read').textContent=msg;requestAnimationFrame(draw)}
+requestAnimationFrame(draw);
+</script>

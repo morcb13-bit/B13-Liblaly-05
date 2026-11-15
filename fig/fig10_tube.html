@@ -1,0 +1,119 @@
+<title>4次元で閉じる階段</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;700&family=Shippori+Mincho:wght@600&display=swap">
+<style>
+/* 一本の縦の流れ：題 → 図 → 操作 → 説明。色は今日の図と同じ組み方 */
+:root{
+  --bg:#eef1f4; --panel:#f8fafb; --ink:#1f2a33; --sub:#5a6772; --line:#d3dae0; --axis:#b8892e;
+  --display:"Shippori Mincho","Hiragino Mincho ProN",serif;
+  --body:"Zen Kaku Gothic New","Hiragino Sans","Noto Sans JP",sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#11171c; --panel:#172028; --ink:#e6edf2; --sub:#9aa9b5; --line:#2c3842; --axis:#e0b45c; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#11171c; --panel:#172028; --ink:#e6edf2; --sub:#9aa9b5; --line:#2c3842; --axis:#e0b45c; color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);line-height:1.75}
+.wrap{max-width:760px;margin:0 auto;padding-block:20px 40px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  display:flex;flex-direction:column;gap:14px}
+h1{font-family:var(--display);font-size:1.6rem;line-height:1.35;margin:0;text-wrap:balance;letter-spacing:.02em}
+.stage{position:relative;background:var(--panel);border:1px solid var(--line);border-radius:6px;overflow:hidden}
+canvas{display:block;width:100%;aspect-ratio:1/1;max-width:100%;touch-action:none;cursor:grab}
+.read{position:absolute;left:10px;top:8px;font-size:.8rem;color:var(--sub);pointer-events:none}
+.ctl{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center}
+.seg{display:flex;flex-wrap:wrap;border:1px solid var(--line);border-radius:5px;overflow:hidden}
+.seg button{font:inherit;font-size:.85rem;padding:6px 11px;border:0;background:var(--panel);color:var(--ink);cursor:pointer}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+button:focus-visible{outline:2px solid var(--axis);outline-offset:2px}
+.lab{font-size:.75rem;color:var(--sub);letter-spacing:.06em}
+.key{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:.8rem;color:var(--sub)}
+.key span{display:inline-flex;align-items:center;gap:5px}
+.key i{width:12px;height:12px;border-radius:2px;display:inline-block;border:1px solid var(--line)}
+.text{max-width:65ch}
+.text h2{font-family:var(--display);font-size:1.15rem;margin:18px 0 4px}
+.text p{margin:6px 0}
+</style>
+<div class="wrap">
+<h1>4次元で閉じる階段</h1>
+<div class="stage">
+  <canvas id="cv" width="900" height="900" aria-label="600胞体の中で五角形10段が閉じる管と、3次元に伸ばすと上り続ける管"></canvas>
+  <div class="read" id="read"></div>
+</div>
+<div class="ctl">
+  <div><div class="lab">描き方</div>
+  <div class="seg" id="mode">
+    <button id="m-auto" data-v="auto" aria-pressed="true">順に</button>
+    <button id="m-stair" data-v="stair" aria-pressed="false">3次元に伸ばす（上り続ける）</button>
+    <button id="m-torus" data-v="torus" aria-pressed="false">ドーナツに巻く（閉じる）</button>
+    <button id="m-4d" data-v="4d" aria-pressed="false">4次元のまま回す</button>
+  </div></div>
+  <div><div class="lab">動き</div><div class="seg"><button id="spin" aria-pressed="true">回す</button></div></div>
+</div>
+<div class="key">
+  <span><i style="background:conic-gradient(#e0605a,#e3b04b,#7cc46a,#3fb3c2,#5b7fe0,#b46ad8,#e0605a)"></i>五角形の段 1〜10（段ごとに色相が一周の 1/10 ずつ回る）</span>
+</div>
+<div class="text">
+<h2>何を見ているか</h2>
+<p>4 次元の正多胞体、600胞体の頂点 120 個から、大円の上に乗る十角形（頂点 10 個）を 1 本選びます。そのまわりに、正五角形 5 個ずつの段が 10 段並んだ管があります。隣り合う段の五角形は互いに 36° ずれて、ジグザグの輪（反柱）でつながります。どの頂点も、下の段と 2 本、同じ段と 2 本、上の段と 2 本の辺でつながっています。</p>
+<h2>3 次元に伸ばすと、階段は上り続ける</h2>
+<p>同じ段を 3 次元にまっすぐ積むと、一段ごとに 36° ずつ回りながら上っていき、10 段目の次はまた最初の向きに戻ります。それでも高さは戻らず、管は上へ伸び続けます。30面体の輪を回しながら積んだ管が、輪5個ごとに同じ高さだけ上がり続けたのと同じ形です。どの一段を見ても正しく上っているのに、一周しても元の段には戻りません。</p>
+<h2>4 次元では一周して閉じる</h2>
+<p>600胞体の中では、10 段目の次がちょうど 1 段目に戻り、管は閉じます。「ドーナツに巻く」は、十角形の向き（大円の上の角度）と、五角形の向き（それと直交する大円の上の角度）を、ドーナツの二つの角度として描いたものです。3 次元では上り続けた階段が、4 次元では輪になっています。ペンローズの階段を、4 次元で閉じている輪を 3 次元に落とした影として見る読み方です。</p>
+<h2>確かめ方</h2>
+<p>600胞体の頂点は a＋bφ（a, b は整数）だけで持ち、十角形は v(k+1) ＝ φ·v(k) − v(k−1) でたどりました。どの頂点とも直交する十角形がもう 1 本あり、残り 100 頂点はちょうど 50 個ずつに分かれます。段の数、正五角形であること、上下 2 本ずつのつながりは、整数の比較で確かめています。小数にしたのは図を描くところだけです。</p>
+</div>
+</div>
+<script>
+const D={"v":[[1.61803,0.52573,1.0,0.32492],[1.61803,0.52573,-0.61803,-0.85065],[1.61803,0.52573,-1.0,0.32492],[1.61803,0.52573,0.0,1.05146],[1.61803,0.52573,0.61803,-0.85065],[1.0,1.37638,-0.61803,0.85065],[1.0,1.37638,0.0,-1.05146],[1.0,1.37638,1.0,-0.32492],[1.0,1.37638,0.61803,0.85065],[1.0,1.37638,-1.0,-0.32492],[0.0,1.7013,1.0,0.32492],[0.0,1.7013,-0.61803,-0.85065],[0.0,1.7013,-1.0,0.32492],[0.0,1.7013,-0.0,1.05146],[0.0,1.7013,0.61803,-0.85065],[-1.0,1.37638,-0.61803,0.85065],[-1.0,1.37638,0.0,-1.05146],[-1.0,1.37638,1.0,-0.32492],[-1.0,1.37638,0.61803,0.85065],[-1.0,1.37638,-1.0,-0.32492],[-1.61803,0.52573,1.0,0.32492],[-1.61803,0.52573,-0.61803,-0.85065],[-1.61803,0.52573,-1.0,0.32492],[-1.61803,0.52573,0.0,1.05146],[-1.61803,0.52573,0.61803,-0.85065],[-1.61803,-0.52573,-0.61803,0.85065],[-1.61803,-0.52573,0.0,-1.05146],[-1.61803,-0.52573,1.0,-0.32492],[-1.61803,-0.52573,0.61803,0.85065],[-1.61803,-0.52573,-1.0,-0.32492],[-1.0,-1.37638,1.0,0.32492],[-1.0,-1.37638,-0.61803,-0.85065],[-1.0,-1.37638,-1.0,0.32492],[-1.0,-1.37638,0.0,1.05146],[-1.0,-1.37638,0.61803,-0.85065],[0.0,-1.7013,-0.61803,0.85065],[0.0,-1.7013,0.0,-1.05146],[0.0,-1.7013,1.0,-0.32492],[0.0,-1.7013,0.61803,0.85065],[0.0,-1.7013,-1.0,-0.32492],[1.0,-1.37638,1.0,0.32492],[1.0,-1.37638,-0.61803,-0.85065],[1.0,-1.37638,-1.0,0.32492],[1.0,-1.37638,0.0,1.05146],[1.0,-1.37638,0.61803,-0.85065],[1.61803,-0.52573,-0.61803,0.85065],[1.61803,-0.52573,0.0,-1.05146],[1.61803,-0.52573,1.0,-0.32492],[1.61803,-0.52573,0.61803,0.85065],[1.61803,-0.52573,-1.0,-0.32492]],"layer":[0,0,0,0,0,1,1,1,1,1,2,2,2,2,2,3,3,3,3,3,4,4,4,4,4,5,5,5,5,5,6,6,6,6,6,7,7,7,7,7,8,8,8,8,8,9,9,9,9,9],"edges":[[0,3],[0,4],[0,7],[0,8],[0,47],[0,48],[1,2],[1,4],[1,6],[1,9],[1,46],[1,49],[2,3],[2,5],[2,9],[2,45],[2,49],[3,5],[3,8],[3,45],[3,48],[4,6],[4,7],[4,46],[4,47],[5,8],[5,9],[5,12],[5,13],[6,7],[6,9],[6,11],[6,14],[7,8],[7,10],[7,14],[8,10],[8,13],[9,11],[9,12],[10,13],[10,14],[10,17],[10,18],[11,12],[11,14],[11,16],[11,19],[12,13],[12,15],[12,19],[13,15],[13,18],[14,16],[14,17],[15,18],[15,19],[15,22],[15,23],[16,17],[16,19],[16,21],[16,24],[17,18],[17,20],[17,24],[18,20],[18,23],[19,21],[19,22],[20,23],[20,24],[20,27],[20,28],[21,22],[21,24],[21,26],[21,29],[22,23],[22,25],[22,29],[23,25],[23,28],[24,26],[24,27],[25,28],[25,29],[25,32],[25,33],[26,27],[26,29],[26,31],[26,34],[27,28],[27,30],[27,34],[28,30],[28,33],[29,31],[29,32],[30,33],[30,34],[30,37],[30,38],[31,32],[31,34],[31,36],[31,39],[32,33],[32,35],[32,39],[33,35],[33,38],[34,36],[34,37],[35,38],[35,39],[35,42],[35,43],[36,37],[36,39],[36,41],[36,44],[37,38],[37,40],[37,44],[38,40],[38,43],[39,41],[39,42],[40,43],[40,44],[40,47],[40,48],[41,42],[41,44],[41,46],[41,49],[42,43],[42,45],[42,49],[43,45],[43,48],[44,46],[44,47],[45,48],[45,49],[46,47],[46,49],[47,48]],"D":[[2.0,0.0,0.0,0.0],[1.61803,1.17557,-0.0,-0.0],[0.61803,1.90211,0.0,0.0],[-0.61803,1.90211,0.0,0.0],[-1.61803,1.17557,-0.0,-0.0],[-2.0,0.0,0.0,0.0],[-1.61803,-1.17557,0.0,0.0],[-0.61803,-1.90211,0.0,0.0],[0.61803,-1.90211,0.0,0.0],[1.61803,-1.17557,0.0,0.0]],"Dp":[[0.0,-0.0,2.0,-0.0],[0.0,-0.0,1.61803,1.17557],[0.0,0.0,-1.61803,1.17557],[0.0,0.0,-0.61803,-1.90211],[0.0,0.0,-0.61803,1.90211],[0.0,0.0,0.61803,-1.90211],[0.0,0.0,0.61803,1.90211],[0.0,0.0,1.61803,-1.17557],[0.0,0.0,-1.61803,-1.17557],[0.0,0.0,-2.0,0.0]]};
+const cv=document.getElementById('cv'),cx=cv.getContext('2d');
+const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+let mode='stair',auto=true,lastSw=0,spin=true,az=0.5,el=0.35,t4=0;const ORDER=['stair','torus','4d'];
+function setPressed(gid,v){document.querySelectorAll('#'+gid+' button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.v===v?'true':'false'))}
+document.querySelectorAll('#mode button').forEach(b=>b.onclick=()=>{auto=b.dataset.v==='auto';if(!auto)mode=b.dataset.v;setPressed('mode',b.dataset.v)});
+const sb=document.getElementById('spin');sb.onclick=()=>{spin=!spin;sb.setAttribute('aria-pressed',spin)};
+if(matchMedia('(prefers-reduced-motion: reduce)').matches){spin=false;sb.setAttribute('aria-pressed','false')}
+let drag=null;
+cv.addEventListener('pointerdown',e=>{drag={x:e.clientX,y:e.clientY,az,el};cv.setPointerCapture(e.pointerId)});
+cv.addEventListener('pointermove',e=>{if(!drag)return;az=drag.az+(e.clientX-drag.x)*0.01;el=Math.max(-1.4,Math.min(1.4,drag.el+(e.clientY-drag.y)*0.01))});
+cv.addEventListener('pointerup',()=>drag=null);
+// 段ごとの角度（十角形の面の中の角度）を、段の番号に合わせて切れ目なくつなぐ
+const th=D.v.map(v=>Math.atan2(v[1],v[0])), ps=D.v.map(v=>Math.atan2(v[3],v[2]));
+const th0=th[D.layer.indexOf(0)];
+const thu=D.v.map((v,i)=>{const want=th0+D.layer[i]*Math.PI/5;let a=th[i];while(a-want>Math.PI)a-=2*Math.PI;while(a-want<-Math.PI)a+=2*Math.PI;return a});
+function place(i,copy){const a=thu[i]+copy*2*Math.PI, p=ps[i];
+  if(mode==='stair'){const r=1.0;return[r*Math.cos(p),r*Math.sin(p),(a-th0)*0.55-3.3]}
+  if(mode==='torus'){const R=2.6,r=1.0;return[(R+r*Math.cos(p))*Math.cos(a),(R+r*Math.cos(p))*Math.sin(a),r*Math.sin(p)]}
+  // 4次元のまま：(e1,e3) と (e2,e4) を回して、e4 を遠近に使う
+  const v=D.v[i];const c=Math.cos(t4),s=Math.sin(t4);
+  const x=v[0]*c-v[2]*s, z=v[0]*s+v[2]*c, y=v[1]*Math.cos(t4*0.6)-v[3]*Math.sin(t4*0.6), w=v[1]*Math.sin(t4*0.6)+v[3]*Math.cos(t4*0.6);
+  const k=1.6/(3.2-w);return[x*k*1.7,y*k*1.7,z*k*1.7]}
+function draw(now){
+  if(auto&&now-lastSw>6000){lastSw=now;mode=ORDER[(ORDER.indexOf(mode)+1)%3]}
+  if(spin&&!drag){az+=0.004;t4+=0.006}
+  const W=cv.width,H=cv.height;cx.clearRect(0,0,W,H);
+  const s=W*(mode==='stair'?0.11:mode==='torus'?0.12:0.2);
+  const ca=Math.cos(az),sa=Math.sin(az),ce=Math.cos(el),se=Math.sin(el);
+  const pr=p=>{const x=p[0]*ca-p[1]*sa,y=p[0]*sa+p[1]*ca;const yy=y*se+p[2]*ce, zz=-y*ce+p[2]*se;return[W/2+x*s,H/2-yy*s,zz]};
+  const dark=css('--bg').toLowerCase()==='#11171c';
+  const copies=mode==='stair'?[0,1]:[0];
+  const segs=[];
+  for(const c of copies){
+    for(const [i,j] of D.edges){let li=D.layer[i],lj=D.layer[j];let ci=c,cj=c;
+      if(li===9&&lj===0)cj=c+1; else if(li===0&&lj===9)ci=c+1;
+      if(mode!=='stair'){ci=cj=0}
+      else if(ci>1||cj>1)continue;
+      const A=pr(place(i,ci)),B=pr(place(j,cj));const h=((li+lj)/2)*36+ (Math.abs(li-lj)>5?180:0);
+      segs.push([(A[2]+B[2])/2,A,B,`hsl(${h%360},65%,${dark?62:50}%)`,li===lj])}
+  }
+  segs.sort((a,b)=>a[0]-b[0]);
+  for(const [,A,B,col,same] of segs){cx.strokeStyle=col;cx.lineWidth=same?Math.max(2,W/320):Math.max(1,W/700);cx.globalAlpha=same?1:0.75;
+    cx.beginPath();cx.moveTo(A[0],A[1]);cx.lineTo(B[0],B[1]);cx.stroke()}
+  cx.globalAlpha=1;
+  for(const c of copies)D.v.forEach((v,i)=>{const P=pr(place(i,c));cx.fillStyle=`hsl(${D.layer[i]*36},70%,${dark?66:46}%)`;cx.beginPath();cx.arc(P[0],P[1],Math.max(3,W/180),0,7);cx.fill()});
+  document.getElementById('read').textContent=mode==='stair'?'3次元に伸ばす：10段で向きは戻るが、高さは戻らない（2周分を表示）':mode==='torus'?'ドーナツに巻く：10段目の次が1段目に戻る':'4次元のまま回す：600胞体の中の管をそのまま回して、3次元に落としたもの';
+  requestAnimationFrame(draw);
+}
+requestAnimationFrame(draw);
+</script>

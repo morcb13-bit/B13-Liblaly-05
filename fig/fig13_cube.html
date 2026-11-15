@@ -1,0 +1,106 @@
+<title>1次元から5次元へ</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;700&family=Shippori+Mincho:wght@600&display=swap">
+<style>
+:root{--bg:#eef1f4;--panel:#f8fafb;--ink:#1f2a33;--sub:#5a6772;--line:#d3dae0;--axis:#b8892e;
+  --display:"Shippori Mincho","Hiragino Mincho ProN",serif;--body:"Zen Kaku Gothic New","Hiragino Sans","Noto Sans JP",sans-serif}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#11171c;--panel:#172028;--ink:#e6edf2;--sub:#9aa9b5;--line:#2c3842;--axis:#e0b45c;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#11171c;--panel:#172028;--ink:#e6edf2;--sub:#9aa9b5;--line:#2c3842;--axis:#e0b45c;color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);line-height:1.75}
+.wrap{max-width:760px;margin:0 auto;padding-block:20px 40px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:14px}
+h1{font-family:var(--display);font-size:1.6rem;line-height:1.35;margin:0;text-wrap:balance;letter-spacing:.02em}
+.stage{position:relative;background:var(--panel);border:1px solid var(--line);border-radius:6px;overflow:hidden}
+canvas{display:block;width:100%;aspect-ratio:1/1;max-width:100%;touch-action:none;cursor:grab}
+.read{position:absolute;left:10px;top:8px;right:10px;font-size:.8rem;color:var(--sub);pointer-events:none}
+.ctl{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center}
+.seg{display:flex;flex-wrap:wrap;border:1px solid var(--line);border-radius:5px;overflow:hidden}
+.seg button{font:inherit;font-size:.85rem;padding:6px 11px;border:0;background:var(--panel);color:var(--ink);cursor:pointer}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+button:focus-visible{outline:2px solid var(--axis);outline-offset:2px}
+.lab{font-size:.75rem;color:var(--sub);letter-spacing:.06em}
+.text{max-width:65ch}.text h2{font-family:var(--display);font-size:1.15rem;margin:18px 0 4px}.text p{margin:6px 0}
+</style>
+<div class="wrap">
+<h1>1次元から5次元へ</h1>
+<div class="stage">
+  <canvas id="cv" width="900" height="900" aria-label="線分を写してつなぎ、正方形、立方体、4次元立方体と伸ばし、4次元は二つの面を同時に回し、5次元は断面を時間とともに動かして描く図"></canvas>
+  <div class="read" id="read"></div>
+</div>
+<div class="ctl">
+  <div><div class="lab">段</div><div class="seg" id="dim">
+    <button data-v="1" aria-pressed="true">1次元</button><button data-v="2" aria-pressed="false">2次元</button><button data-v="3" aria-pressed="false">3次元</button><button data-v="4" aria-pressed="false">4次元</button><button data-v="5" aria-pressed="false">5次元</button></div></div>
+  <div><div class="lab">再生</div><div class="seg"><button id="run" aria-pressed="true">動かす</button><button id="auto" aria-pressed="true">順に</button></div></div>
+  <div><div class="lab">速さ</div><div class="seg" id="spd"><button data-v="0.5" aria-pressed="false">遅く</button><button data-v="1" aria-pressed="true">ふつう</button><button data-v="2" aria-pressed="false">速く</button></div></div>
+</div>
+<div class="text">
+<h2>写して、つなぐ</h2>
+<p>点を写して二つにし、つなぐと線分（1次元）。線分を写してつなぐと正方形（2次元）、正方形を写してつなぐと立方体（3次元）、立方体を写してつなぐと4次元の立方体です。頂点は ±1 の列で、一段上がるごとに頂点は2倍、辺は「2倍＋つなぐ線」の足し算で増えます。</p>
+<h2>4次元は回転で描く</h2>
+<p>4次元の立方体は、直交する二つの面を同時に回しています。3次元の回転には必ず動かない軸がありますが、4次元には、動かない向きを一つも持たない回転があります。その回転では、どの頂点も止まらずに動きます。</p>
+<h2>5次元は時間で描く</h2>
+<p>5次元の立方体は、長い対角線に垂直な面で切った断面を、時間とともに端から端へ動かして描きます。断面は4次元の形で、点から始まり、形を変えながら育ち、また点に戻ります。頂点を通る段では、頂点の数が 1, 5, 10, 10, 5, 1 と並びます。断面の形を求める計算だけ小数で、頂点と辺の数え方はすべて整数です。</p>
+</div>
+</div>
+<script>
+const cv=document.getElementById('cv'),cx=cv.getContext('2d');
+const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+let dim=1,run=true,auto=true,speed=1,ph=0,t=0,az=0.55,el=0.35;
+function press(g,v){document.querySelectorAll('#'+g+' button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.v===String(v)?'true':'false'))}
+function setDim(d){dim=d;ph=0;press('dim',d)}
+document.querySelectorAll('#dim button').forEach(b=>b.onclick=()=>{setDim(+b.dataset.v);auto=false;ab.setAttribute('aria-pressed','false')});
+document.querySelectorAll('#spd button').forEach(b=>b.onclick=()=>{speed=+b.dataset.v;press('spd',b.dataset.v)});
+const rb=document.getElementById('run');rb.onclick=()=>{run=!run;rb.setAttribute('aria-pressed',run)};
+const ab=document.getElementById('auto');ab.onclick=()=>{auto=!auto;ab.setAttribute('aria-pressed',auto)};
+if(matchMedia('(prefers-reduced-motion: reduce)').matches){run=false;rb.setAttribute('aria-pressed','false')}
+let drag=null;
+cv.addEventListener('pointerdown',e=>{drag={x:e.clientX,y:e.clientY,az,el};cv.setPointerCapture(e.pointerId)});
+cv.addEventListener('pointermove',e=>{if(!drag)return;az=drag.az+(e.clientX-drag.x)*0.01;el=Math.max(-1.4,Math.min(1.4,drag.el+(e.clientY-drag.y)*0.01))});
+cv.addEventListener('pointerup',()=>drag=null);
+// 頂点（±1 の列）と辺（一つだけ違う組）を整数で作る
+function cube(n){const V=[];for(let m=0;m<(1<<n);m++){const v=[];for(let i=0;i<n;i++)v.push(m>>i&1?-1:1);V.push(v)}
+  const E=[];for(let a=0;a<V.length;a++)for(let b=a+1;b<V.length;b++){let d=0;for(let i=0;i<n;i++)if(V[a][i]!==V[b][i])d++;if(d===1)E.push([a,b])}return{V,E}}
+const C=[null,1,2,3,4,5].map(n=>n?cube(n):null);
+function counts(n){const f=[];for(let k=0;k<=n;k++){let c=1;for(let i=0;i<k;i++)c=c*(n-i)/(i+1);f.push(c*(1<<(n-k)))}return f}
+// 観察者側の表示：各座標軸の3次元の向き
+const AX=[[1,0,0],[0,1,0],[0,0,1],[0.42,0.36,0.30],[-0.30,0.42,-0.34]];
+function to3(p){const q=[0,0,0];for(let i=0;i<p.length;i++)for(let k=0;k<3;k++)q[k]+=p[i]*AX[i][k];return q}
+function rot4(p,a,b){const q=p.slice();const c=Math.cos(a),s=Math.sin(a),c2=Math.cos(b),s2=Math.sin(b);
+  if(q.length>=2){const x=q[0]*c-q[1]*s,y=q[0]*s+q[1]*c;q[0]=x;q[1]=y}
+  if(q.length>=4){const z=q[2]*c2-q[3]*s2,w=q[2]*s2+q[3]*c2;q[2]=z;q[3]=w}return q}
+function view(p){const W=cv.width,S=W*0.17,ca=Math.cos(az),sa=Math.sin(az),ce=Math.cos(el),se=Math.sin(el);
+  const x=p[0]*ca-p[1]*sa,y=p[0]*sa+p[1]*ca;const yy=y*se+p[2]*ce,zz=-y*ce+p[2]*se;const k=4.2/(4.2-zz*0.35);return[W/2+x*S*k,W/2-yy*S*k,zz]}
+function line(A,B,col,w,al){cx.globalAlpha=al;cx.strokeStyle=col;cx.lineWidth=w;cx.beginPath();cx.moveTo(A[0],A[1]);cx.lineTo(B[0],B[1]);cx.stroke();cx.globalAlpha=1}
+function dot(A,col,r){cx.fillStyle=col;cx.beginPath();cx.arc(A[0],A[1],r,0,7);cx.fill()}
+// 5次元の断面：座標の和 ＝ s の面で切る
+function slice5(s){const {V}=C[5];const P=[],key={};
+  for(let a=0;a<V.length;a++)for(let i=0;i<5;i++){if(V[a][i]!==1)continue;const sum=V[a].reduce((x,y)=>x+y,0);const lam=(sum-s)/2;
+    if(lam>=0&&lam<=1){const p=V[a].slice();p[i]=1-2*lam;key[a+':'+i]=P.length;P.push(p)}}
+  const E=[];for(let a=0;a<V.length;a++){for(let i=0;i<5;i++)for(let j=i+1;j<5;j++){if(V[a][i]!==1||V[a][j]!==1)continue;
+    const b=V.findIndex(v=>v.every((x,k)=>k===i?x===-1:x===V[a][k]));const c=V.findIndex(v=>v.every((x,k)=>k===j?x===-1:x===V[a][k]));
+    const ids=[key[a+':'+i],key[a+':'+j],key[c+':'+i],key[b+':'+j]].filter(x=>x!==undefined);
+    const u=[...new Set(ids.map(k=>P[k].map(x=>x.toFixed(4)).join(',')))];
+    if(u.length===2){const pts=ids.map(k=>[k,P[k].map(x=>x.toFixed(4)).join(',')]);const k1=pts.find(p=>p[1]===u[0])[0],k2=pts.find(p=>p[1]===u[1])[0];E.push([k1,k2])}}}
+  return{P,E}}
+function draw(){
+  const dark=css('--bg').toLowerCase()==='#11171c';const ink=css('--ink'),acc=css('--axis'),sub=css('--sub');
+  if(run&&!drag){ph+=0.004*speed;t+=0.01*speed;az+=0.002*speed}
+  const dur=dim===5?2.2:1.6;
+  if(auto&&ph>dur)setDim(dim===5?1:dim+1);
+  const W=cv.width;cx.clearRect(0,0,W,W);let msg='';
+  if(dim<=4){const n=dim,{V,E}=C[n];const g=Math.min(1,ph/0.6);   // 写して滑らせる割合
+    const a=dim===4?t*0.9:(dim===3?t*0.6:0),b=dim===4?t*0.55:0;
+    const pos=V.map(v=>{const p=v.slice();if(v[n-1]===-1)p[n-1]=1-2*g;return view(to3(rot4(p,a,b)))});
+    for(const [i,j] of E){const new_=V[i][n-1]!==V[j][n-1];line(pos[i],pos[j],new_?acc:ink,W/(new_?260:220),new_?g:1)}
+    pos.forEach((p,i)=>dot(p,V[i][n-1]===-1?acc:ink,W/140));
+    const f=counts(n);msg=`${n}次元の立方体：頂点 ${f[0]}`+(n>=1?`・辺 ${f[1]}`:'')+(n>=2?`・面 ${f[2]}`:'')+(n>=3?`・立方体 ${f[3]}`:'')+(n>=4?`・4次元立方体 ${f[4]}`:'')+'（金色が写してつないだ部分）'+(n===4?'／二つの面を同時に回す':'');}
+  else{const s=5*Math.cos(Math.PI*(1-Math.min(1,ph/dur)));const {P,E}=slice5(s);
+    const R=P.map(p=>view(to3(rot4(p,t*0.6,t*0.37))));
+    // 外枠として5次元の立方体を薄く
+    const {V,E:E5}=C[5];const Q=V.map(v=>view(to3(rot4(v,t*0.6,t*0.37))));for(const [i,j] of E5)line(Q[i],Q[j],sub,1,0.18);
+    for(const [i,j] of E)line(R[i],R[j],acc,W/240,1);R.forEach(p=>dot(p,acc,W/170));
+    const lv=Math.round((5-s)/2*100)/100;msg=`5次元の立方体を、座標の和 ＝ ${s.toFixed(2)} で切った断面（4次元の形）：断面の頂点 ${new Set(P.map(p=>p.map(x=>x.toFixed(3)).join())).size}`}
+  document.getElementById('read').textContent=msg;requestAnimationFrame(draw)}
+requestAnimationFrame(draw);
+</script>

@@ -1,0 +1,84 @@
+<title>52の整数で回す36°</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;700&family=Shippori+Mincho:wght@600&display=swap">
+<style>
+:root{--bg:#eef1f4;--panel:#f8fafb;--ink:#1f2a33;--sub:#5a6772;--line:#d3dae0;--axis:#b8892e;
+  --display:"Shippori Mincho","Hiragino Mincho ProN",serif;--body:"Zen Kaku Gothic New","Hiragino Sans","Noto Sans JP",sans-serif}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#11171c;--panel:#172028;--ink:#e6edf2;--sub:#9aa9b5;--line:#2c3842;--axis:#e0b45c;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#11171c;--panel:#172028;--ink:#e6edf2;--sub:#9aa9b5;--line:#2c3842;--axis:#e0b45c;color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);line-height:1.75}
+.wrap{max-width:760px;margin:0 auto;padding-block:20px 40px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:14px}
+h1{font-family:var(--display);font-size:1.6rem;line-height:1.35;margin:0;text-wrap:balance;letter-spacing:.02em}
+.stage{position:relative;background:var(--panel);border:1px solid var(--line);border-radius:6px;overflow:hidden}
+canvas{display:block;width:100%;aspect-ratio:1/1;max-width:100%;touch-action:none;cursor:grab}
+.read{position:absolute;left:10px;top:8px;right:10px;font-size:.8rem;color:var(--sub);pointer-events:none}
+.ctl{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center}
+.seg{display:flex;flex-wrap:wrap;border:1px solid var(--line);border-radius:5px;overflow:hidden}
+.seg button{font:inherit;font-size:.85rem;padding:6px 11px;border:0;background:var(--panel);color:var(--ink);cursor:pointer}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+button:focus-visible{outline:2px solid var(--axis);outline-offset:2px}
+.lab{font-size:.75rem;color:var(--sub);letter-spacing:.06em}
+.text{max-width:65ch}.text h2{font-family:var(--display);font-size:1.15rem;margin:18px 0 4px}.text p{margin:6px 0}
+</style>
+<div class="wrap">
+<h1>52の整数で回す36°</h1>
+<div class="stage">
+  <canvas id="cv" width="900" height="900" aria-label="13の番地に置いた52個の整数が36°の回転のたびに書き換わり、一つの番地の点が36°の平面で十角形を、108°の平面で十芒星をなぞって10回で戻る図"></canvas>
+  <div class="read" id="read"></div>
+</div>
+<div class="ctl">
+  <div><div class="lab">再生</div><div class="seg"><button id="run" aria-pressed="true">動かす</button><button id="step">36° 回す</button><button id="reset">最初に戻す</button></div></div>
+  <div><div class="lab">速さ</div><div class="seg" id="spd"><button data-v="0.5" aria-pressed="false">遅く</button><button data-v="1" aria-pressed="true">ふつう</button><button data-v="2" aria-pressed="false">速く</button></div></div>
+</div>
+<div class="text">
+<h2>何を見ているか</h2>
+<p>上の表は 13 の番地で、どの番地にも a＋bζ＋cζ²＋dζ³ が一つ置かれています（ζ は 36° の回転）。整数で数えると 13×4 ＝ 52 個です。ζ を一回掛けるたびに、どの番地でも (a, b, c, d) が (−d, a＋d, b−d, c＋d) に書き換わります。これが 52×52 の整数の行列 R です。</p>
+<h2>二つの平面で同時に回る</h2>
+<p>下の二つの円は、番地 0 の 4次元を二つの平面に分けたものです。左の平面では一回に 36° 回り、点は正十角形をなぞります。右の平面では一回に 108° 回り、点は十芒星をなぞります。どちらも 10 回で元に戻り、R^10 ＝ I です。動かない向きはなく、det(R − I) ＝ 1 でした。</p>
+<h2>確かめ方</h2>
+<p>二つの平面に分かれることは、B² − φB ＋ I と B² − (1−φ)B ＋ I の二つの行列（a＋bφ の整数）が互いに打ち消し合い、どちらも階数 2 であることで確かめました。円の上の位置を描くところだけ小数にしています。</p>
+</div>
+</div>
+<script>
+const cv=document.getElementById('cv'),cx=cv.getContext('2d');
+const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+let run=true,speed=1,clock=0,k=0,anim=1;
+function zt(v){const [a,b,c,d]=v;return[-d,a+d,b-d,c+d]}
+function start(){const A=[];for(let i=0;i<13;i++){let v=[1,0,0,0];for(let t=0;t<i%10;t++)v=zt(v);if(i>=10)v=v.map((x,j)=>x+(j===0?1:0));A.push(v)}return A}
+let A=start(),hist=[A[0].slice()];
+function step(){A=A.map(zt);k++;hist.push(A[0].slice());if(hist.length>11)hist.shift();anim=0}
+function reset(){A=start();k=0;hist=[A[0].slice()];clock=0;anim=1}
+document.getElementById('step').onclick=()=>{if(k>=10)reset();else step()};
+document.getElementById('reset').onclick=reset;
+document.querySelectorAll('#spd button').forEach(b=>b.onclick=()=>{speed=+b.dataset.v;document.querySelectorAll('#spd button').forEach(x=>x.setAttribute('aria-pressed',x===b?'true':'false'))});
+const rb=document.getElementById('run');rb.onclick=()=>{run=!run;rb.setAttribute('aria-pressed',run)};
+if(matchMedia('(prefers-reduced-motion: reduce)').matches){run=false;rb.setAttribute('aria-pressed','false')}
+// 観察者側の表示：z を ζ＝e^{iπ/5}（36°）と ζ³（108°）で読む
+function plane(v,m){let x=0,y=0;for(let j=0;j<4;j++){const a=Math.PI*m*j/5;x+=v[j]*Math.cos(a);y+=v[j]*Math.sin(a)}return[x,y]}
+function draw(){
+  const W=cv.width;cx.clearRect(0,0,W,W);const ink=css('--ink'),sub=css('--sub'),acc=css('--axis'),line=css('--line'),panel=css('--panel'),dark=css('--bg').toLowerCase()==='#11171c';
+  const blue=dark?'#6fa8ff':'#2f5fb3';
+  if(anim<1)anim+=0.03*speed;
+  if(run){clock+=speed;if(clock>70){clock=0;if(k>=10)reset();else step()}}
+  // 表 13×4
+  const x0=W*0.05,cw=(W*0.9)/13,y0=W*0.05,ch=W*0.05;cx.textAlign='center';cx.textBaseline='middle';
+  for(let i=0;i<13;i++){for(let r=0;r<4;r++){cx.fillStyle=i===0?(dark?'#33291a':'#f6ecd9'):panel;cx.fillRect(x0+i*cw+1,y0+r*ch+1,cw-2,ch-2);cx.strokeStyle=line;cx.strokeRect(x0+i*cw+1,y0+r*ch+1,cw-2,ch-2);
+      const n=A[i][r];cx.fillStyle=n===0?sub:ink;cx.font=`${Math.min(W/42,cw*0.45)}px sans-serif`;cx.fillText(String(n),x0+i*cw+cw/2,y0+r*ch+ch/2)}
+    cx.fillStyle=sub;cx.font=`${W/60}px sans-serif`;cx.fillText(String(i),x0+i*cw+cw/2,y0+4*ch+W*0.02)}
+  cx.textAlign='left';cx.fillStyle=sub;cx.font=`${W/55}px sans-serif`;cx.fillText('上から a, b, c, d ／ 下の数字は番地',x0,y0+4*ch+W*0.055);
+  // 二つの平面
+  const cy=W*0.66,R=W*0.19;
+  [[1,W*0.27,'36° の平面（正十角形）'],[3,W*0.73,'108° の平面（十芒星）']].forEach(([m,ox,lab])=>{
+    cx.strokeStyle=line;cx.lineWidth=1;cx.beginPath();cx.arc(ox,cy,R,0,7);cx.stroke();
+    const pts=hist.map(v=>plane(v,m));const rr=Math.hypot(...pts[0])||1;
+    const P=pts.map(p=>[ox+p[0]/rr*R,cy-p[1]/rr*R]);
+    cx.strokeStyle=m===1?blue:acc;cx.lineWidth=W/320;cx.beginPath();P.forEach((p,i)=>{if(i===0)cx.moveTo(p[0],p[1]);else{const q=i===P.length-1?[P[i-1][0]+(p[0]-P[i-1][0])*Math.min(1,anim),P[i-1][1]+(p[1]-P[i-1][1])*Math.min(1,anim)]:p;cx.lineTo(q[0],q[1])}});cx.stroke();
+    const last=P[P.length-1];cx.fillStyle=m===1?blue:acc;cx.beginPath();cx.arc(last[0],last[1],W/90,0,7);cx.fill();
+    cx.fillStyle=ink;cx.font=`${W/40}px sans-serif`;cx.textAlign='center';cx.fillText(lab,ox,cy+R+W*0.05)});
+  document.getElementById('read').textContent='';
+  cx.textAlign='center';cx.fillStyle=ink;cx.font=`${W/32}px sans-serif`;cx.fillText(k===10?'10 回で元に戻った（R^10 ＝ I）':`36° の回転を ${k} 回`,W/2,W*0.40);
+  requestAnimationFrame(draw)}
+requestAnimationFrame(draw);
+</script>

@@ -1,0 +1,82 @@
+<title>深さで縮むずれ</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;700&family=Shippori+Mincho:wght@600&display=swap">
+<style>
+:root{--bg:#eef1f4;--panel:#f8fafb;--ink:#1f2a33;--sub:#5a6772;--line:#d3dae0;--axis:#b8892e;
+  --display:"Shippori Mincho","Hiragino Mincho ProN",serif;--body:"Zen Kaku Gothic New","Hiragino Sans","Noto Sans JP",sans-serif}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#11171c;--panel:#172028;--ink:#e6edf2;--sub:#9aa9b5;--line:#2c3842;--axis:#e0b45c;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#11171c;--panel:#172028;--ink:#e6edf2;--sub:#9aa9b5;--line:#2c3842;--axis:#e0b45c;color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);line-height:1.75}
+.wrap{max-width:760px;margin:0 auto;padding-block:20px 40px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:14px}
+h1{font-family:var(--display);font-size:1.6rem;line-height:1.35;margin:0;text-wrap:balance;letter-spacing:.02em}
+.stage{position:relative;background:var(--panel);border:1px solid var(--line);border-radius:6px;overflow:hidden}
+canvas{display:block;width:100%;aspect-ratio:1/1;max-width:100%;touch-action:none;cursor:grab}
+.read{position:absolute;left:10px;top:8px;right:10px;font-size:.8rem;color:var(--sub);pointer-events:none}
+.ctl{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center}
+.seg{display:flex;flex-wrap:wrap;border:1px solid var(--line);border-radius:5px;overflow:hidden}
+.seg button{font:inherit;font-size:.85rem;padding:6px 11px;border:0;background:var(--panel);color:var(--ink);cursor:pointer}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+button:focus-visible{outline:2px solid var(--axis);outline-offset:2px}
+.lab{font-size:.75rem;color:var(--sub);letter-spacing:.06em}
+.text{max-width:65ch}.text h2{font-family:var(--display);font-size:1.15rem;margin:18px 0 4px}.text p{margin:6px 0}
+</style>
+<div class="wrap">
+<h1>深さで縮むずれ</h1>
+<div class="stage">
+  <canvas id="cv" width="900" height="900" aria-label="φ倍を重ねる深さとともに、ずれ e_k の大きさが符号を交互に変えながらφ分の1ずつ縮み、13のm乗分の1の線を順に越える図"></canvas>
+  <div class="read" id="read"></div>
+</div>
+<div class="ctl">
+  <div><div class="lab">再生</div><div class="seg"><button id="run" aria-pressed="true">動かす</button><button id="step">一段深く</button><button id="reset">最初に戻す</button></div></div>
+  <div><div class="lab">速さ</div><div class="seg" id="spd"><button data-v="0.5" aria-pressed="false">遅く</button><button data-v="1" aria-pressed="true">ふつう</button><button data-v="2" aria-pressed="false">速く</button></div></div>
+</div>
+<div class="text">
+<h2>何を見ているか</h2>
+<p>深さ k は、φ 倍の書き換え (a, b) → (b, a＋b) を k 回重ねたものです。そのとき番地に現れる整数の組 (F_k, F_{k+1}) で、F_k 個ぶんの φ を整数 F_{k+1} に置き換えると、ずれ e_k ＝ F_{k+1} − F_k·φ が残ります。棒の長さは |e_k| を対数の目盛りで描いたもので、短いほどずれが小さいことを表します。0 より上が e_k ＞ 0、下が e_k ＜ 0 です。</p>
+<h2>一段ごとに φ 分の 1</h2>
+<p>φ^k·e_k ＝ (−1)^k が整数として成り立つので、ずれは一段深くなるごとにちょうど φ 分の 1 になり、符号は交互に変わります。60 段まで、ずれが大きくなる段は一つもありませんでした。</p>
+<h2>13 の桁に必要な深さ</h2>
+<p>横の線は 13 分の 1、13² 分の 1、13³ 分の 1、13⁴ 分の 1 です。ずれがそれぞれの線を初めて下回る深さは 6, 11, 16, 22 でした。13 進で一桁細かく測るには、深さが 5〜6 段増えます。判定は、13^m 倍したずれが 1 より小さいかを a＋bφ の整数で比べて行い、小数にしたのは図を描くところだけです。</p>
+</div>
+</div>
+<script>
+const cv=document.getElementById('cv'),cx=cv.getContext('2d');
+const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const PHI=(1+Math.sqrt(5))/2, KMAX=26, NEED={1:6,2:11,3:16,4:22};
+let run=true,speed=1,clock=0,k=0;
+const F=[0,1];while(F.length<KMAX+3)F.push(F[F.length-1]+F[F.length-2]);
+document.getElementById('step').onclick=()=>{k=k>=KMAX?0:k+1};
+document.getElementById('reset').onclick=()=>{k=0;clock=0};
+document.querySelectorAll('#spd button').forEach(b=>b.onclick=()=>{speed=+b.dataset.v;document.querySelectorAll('#spd button').forEach(x=>x.setAttribute('aria-pressed',x===b?'true':'false'))});
+const rb=document.getElementById('run');rb.onclick=()=>{run=!run;rb.setAttribute('aria-pressed',run)};
+if(matchMedia('(prefers-reduced-motion: reduce)').matches){run=false;rb.setAttribute('aria-pressed','false')}
+function e(j){return F[j+1]-F[j]*PHI}   // 観察者側の表示（判定は整数で済ませてある）
+function draw(){
+  const W=cv.width;cx.clearRect(0,0,W,W);const ink=css('--ink'),sub=css('--sub'),acc=css('--axis'),line=css('--line'),dark=css('--bg').toLowerCase()==='#11171c';
+  const blue=dark?'#6fa8ff':'#2f5fb3';
+  if(run){clock+=speed;if(clock>45){clock=0;k=k>=KMAX?0:k+1}}
+  const x0=W*0.12,x1=W*0.96,yMid=W*0.5,H=W*0.38;const bw=(x1-x0)/(KMAX+1);
+  const lmin=-6.2,lmax=0.3;const yOf=v=>H*(Math.log10(v)-lmin)/(lmax-lmin);
+  cx.strokeStyle=line;cx.lineWidth=1;cx.beginPath();cx.moveTo(x0,yMid);cx.lineTo(x1,yMid);cx.stroke();
+  for(let m=1;m<=4;m++){const h=yOf(Math.pow(13,-m));const reached=k>=NEED[m];
+    [yMid-h,yMid+h].forEach(y=>{cx.strokeStyle=reached?acc:line;cx.setLineDash([6,5]);cx.beginPath();cx.moveTo(x0,y);cx.lineTo(x1,y);cx.stroke();cx.setLineDash([])});
+    cx.fillStyle=reached?acc:sub;cx.font=`${W/50}px sans-serif`;cx.textAlign='right';cx.fillText(`13^-${m}`,x0-6,yMid-h+W*0.008);
+    cx.textAlign='left';if(reached)cx.fillText(`深さ ${NEED[m]}`,x1-W*0.1,yMid-h-W*0.008)}
+  for(let j=0;j<=k;j++){const v=e(j),h=yOf(Math.abs(v));const x=x0+j*bw+bw*0.15;
+    cx.fillStyle=j===k?acc:(v>0?blue:(dark?'#c98bd9':'#8e44ad'));cx.globalAlpha=j===k?1:0.75;
+    if(v>0)cx.fillRect(x,yMid-h,bw*0.7,h);else cx.fillRect(x,yMid,bw*0.7,h);cx.globalAlpha=1}
+  cx.fillStyle=sub;cx.font=`${W/60}px sans-serif`;cx.textAlign='center';
+  for(let j=0;j<=KMAX;j+=2)cx.fillText(String(j),x0+j*bw+bw/2,yMid+H+W*0.035);
+  cx.fillText('深さ k',(x0+x1)/2,yMid+H+W*0.07);
+  // 整数の組
+  const s=k%2===0?'+':'−';
+  cx.textAlign='left';cx.fillStyle=ink;cx.font=`${W/30}px sans-serif`;
+  cx.fillText(`深さ ${k}：(F_k, F_{k+1}) ＝ (${F[k]}, ${F[k+1]})`,W*0.06,W*0.07);
+  cx.fillStyle=sub;cx.font=`${W/38}px sans-serif`;
+  cx.fillText(`ずれ e_${k} ＝ ${F[k+1]} − ${F[k]}φ   （φ^${k}·e_${k} ＝ ${k%2===0?'＋1':'−1'}）`,W*0.06,W*0.115);
+  document.getElementById('read').textContent='';
+  requestAnimationFrame(draw)}
+requestAnimationFrame(draw);
+</script>

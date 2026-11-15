@@ -1,0 +1,89 @@
+<title>13次元までの図形一覧</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;700&family=Shippori+Mincho:wght@600&display=swap">
+<style>
+:root{--bg:#eef1f4;--panel:#f8fafb;--ink:#1f2a33;--sub:#5a6772;--line:#d3dae0;--axis:#b8892e;
+  --display:"Shippori Mincho","Hiragino Mincho ProN",serif;--body:"Zen Kaku Gothic New","Hiragino Sans","Noto Sans JP",sans-serif}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#11171c;--panel:#172028;--ink:#e6edf2;--sub:#9aa9b5;--line:#2c3842;--axis:#e0b45c;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#11171c;--panel:#172028;--ink:#e6edf2;--sub:#9aa9b5;--line:#2c3842;--axis:#e0b45c;color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);line-height:1.75}
+.wrap{max-width:760px;margin:0 auto;padding-block:20px 40px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:14px}
+h1{font-family:var(--display);font-size:1.6rem;line-height:1.35;margin:0;text-wrap:balance;letter-spacing:.02em}
+.stage{position:relative;background:var(--panel);border:1px solid var(--line);border-radius:6px;overflow:hidden}
+canvas{display:block;width:100%;aspect-ratio:1/1;max-width:100%;touch-action:none;cursor:grab}
+.read{position:absolute;left:10px;top:8px;right:10px;font-size:.8rem;color:var(--sub);pointer-events:none}
+.ctl{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center}
+.seg{display:flex;flex-wrap:wrap;border:1px solid var(--line);border-radius:5px;overflow:hidden}
+.seg button{font:inherit;font-size:.85rem;padding:6px 11px;border:0;background:var(--panel);color:var(--ink);cursor:pointer}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+button:focus-visible{outline:2px solid var(--axis);outline-offset:2px}
+.lab{font-size:.75rem;color:var(--sub);letter-spacing:.06em}
+.text{max-width:65ch}.text h2{font-family:var(--display);font-size:1.15rem;margin:18px 0 4px}.text p{margin:6px 0}
+</style>
+<div class="wrap">
+<h1>13次元までの図形一覧</h1>
+<div class="stage">
+  <canvas id="cv" width="900" height="900" aria-label="1次元から13次元まで、正単体・立方体・正軸体の三つを並べて描き、各次元の正多胞体の数を示す図"></canvas>
+  <div class="read" id="read"></div>
+</div>
+<div class="ctl">
+  <div><div class="lab">次元</div><div class="seg" id="dim"></div></div>
+  <div><div class="lab">再生</div><div class="seg"><button id="run" aria-pressed="true">動かす</button><button id="auto" aria-pressed="true">順に</button></div></div>
+  <div><div class="lab">速さ</div><div class="seg" id="spd"><button data-v="0.5" aria-pressed="false">遅く</button><button data-v="1" aria-pressed="true">ふつう</button><button data-v="2" aria-pressed="false">速く</button></div></div>
+</div>
+<div class="text">
+<h2>何を見ているか</h2>
+<p>上から順に、正単体（頂点を一つずつ足して育つ形）、立方体（写してつなぐ形）、正軸体（座標軸の両端を結ぶ形）です。どれも頂点を整数で持ち、平面の上に頂点を等間隔の向きに並べて描いています。次元を上げると、正単体の頂点は n＋1 個、立方体は 2ⁿ 個、正軸体は 2n 個になります。</p>
+<h2>どの次元にもある三つと、3・4次元だけの形</h2>
+<p>正多胞体を全部数えると、3次元に 5 個、4次元に 6 個、5次元から 13次元まではどれも 3 個でした。5次元より上に残るのは、ここに描いた三つだけです。φ を含む形（正十二面体・正二十面体、120胞体・600胞体）は 3次元と 4次元にだけあり、24胞体は 4次元にだけあります。</p>
+<h2>確かめ方</h2>
+<p>正多胞体の数は、シュレーフリ記号ごとに行列式の符号を a＋bφ の整数で判定して数えました。面の数は、頂点の組を全部たどって数えています。小数にしたのは図を描くところだけです。</p>
+</div>
+</div>
+<script>
+const cv=document.getElementById('cv'),cx=cv.getContext('2d');
+const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const COUNT={1:1,2:'∞',3:5,4:6,5:3,6:3,7:3,8:3,9:3,10:3,11:3,12:3,13:3};
+const EXTRA={2:'正多角形はどの p でもある（φ は正五角形に入る）',3:'ほかに φ の入る 正十二面体・正二十面体',4:'ほかに 24胞体と、φ の入る 120胞体・600胞体'};
+let dim=1,run=true,auto=true,speed=1,ph=0,t=0;
+const dg=document.getElementById('dim');for(let n=1;n<=13;n++){const b=document.createElement('button');b.dataset.v=n;b.textContent=n;b.setAttribute('aria-pressed',n===1?'true':'false');dg.appendChild(b)}
+function press(g,v){document.querySelectorAll('#'+g+' button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.v===String(v)?'true':'false'))}
+function setDim(n){dim=n;ph=0;press('dim',n)}
+document.querySelectorAll('#dim button').forEach(b=>b.onclick=()=>{setDim(+b.dataset.v);auto=false;ab.setAttribute('aria-pressed','false')});
+document.querySelectorAll('#spd button').forEach(b=>b.onclick=()=>{speed=+b.dataset.v;press('spd',b.dataset.v)});
+const rb=document.getElementById('run');rb.onclick=()=>{run=!run;rb.setAttribute('aria-pressed',run)};
+const ab=document.getElementById('auto');ab.onclick=()=>{auto=!auto;ab.setAttribute('aria-pressed',auto)};
+if(matchMedia('(prefers-reduced-motion: reduce)').matches){run=false;rb.setAttribute('aria-pressed','false')}
+function C(n,k){let c=1;for(let i=0;i<k;i++)c=c*(n-i)/(i+1);return Math.round(c)}
+function fv(n){return{s:[...Array(n+1).keys()].map(k=>C(n+1,k+1)),c:[...Array(n+1).keys()].map(k=>C(n,k)*2**(n-k)),x:[...Array(n+1).keys()].map(k=>k===n?1:2**(k+1)*C(n,k+1))}}
+// 観察者側の表示：座標軸 k の平面上の向き
+function dirs(m,off){const D=[];for(let k=0;k<m;k++){const a=off+Math.PI*2*k/m+0.12*Math.sin(t+k*1.7);D.push([Math.cos(a),Math.sin(a)])}return D}
+function panel(cy,h,kind,n,col,ink){const W=cv.width,R=h*0.4,cx0=W*0.36;let P=[],E=[];
+  if(kind==='s'){const D=dirs(n+1,-Math.PI/2);P=D;for(let a=0;a<=n;a++)for(let b=a+1;b<=n;b++)E.push([a,b])}
+  if(kind==='c'){const D=n===1?[[1,0]]:dirs(2*n,-Math.PI/2).slice(0,n);const s=1/Math.max(1,Math.sqrt(n));for(let m=0;m<(1<<n);m++){let x=0,y=0;for(let k=0;k<n;k++){const sg=m>>k&1?-1:1;x+=sg*D[k][0]*s;y+=sg*D[k][1]*s}P.push([x,y])}
+    for(let a=0;a<P.length;a++)for(let k=0;k<n;k++){const b=a^(1<<k);if(b>a)E.push([a,b])}}
+  if(kind==='x'){const D=n===1?[[1,0]]:dirs(2*n,-Math.PI/2).slice(0,n);for(let k=0;k<n;k++){P.push(D[k]);P.push([-D[k][0],-D[k][1]])}
+    for(let a=0;a<P.length;a++)for(let b=a+1;b<P.length;b++)if((a>>1)!==(b>>1))E.push([a,b])}
+  const mr=Math.max(...P.map(p=>Math.hypot(p[0],p[1])))||1;const Q=P.map(p=>[cx0+p[0]/mr*R,cy+p[1]/mr*R]);
+  cx.strokeStyle=col;cx.globalAlpha=Math.max(0.08,Math.min(0.9,40/E.length));cx.lineWidth=Math.max(0.6,W/700);cx.beginPath();
+  for(const [a,b] of E){cx.moveTo(Q[a][0],Q[a][1]);cx.lineTo(Q[b][0],Q[b][1])}cx.stroke();cx.globalAlpha=1;
+  cx.fillStyle=col;const r=Math.max(1.5,W/(140+P.length/4));Q.forEach(q=>{cx.beginPath();cx.arc(q[0],q[1],r,0,7);cx.fill()});
+  return E.length}
+function draw(){
+  const W=cv.width;cx.clearRect(0,0,W,W);const ink=css('--ink'),sub=css('--sub'),acc=css('--axis'),dark=css('--bg').toLowerCase()==='#11171c';
+  const cols=[dark?'#6fa8ff':'#2f5fb3',acc,dark?'#7cc79a':'#2f8a57'];
+  if(run){ph+=0.005*speed;t+=0.01*speed}
+  if(auto&&ph>2.4)setDim(dim===13?1:dim+1);
+  const n=dim,F=fv(n),top=W*0.05,h=(W-top)/3;const names=['正単体','立方体','正軸体'],keys=['s','c','x'];
+  cx.strokeStyle=css('--line');cx.lineWidth=1;for(let i=1;i<3;i++){cx.beginPath();cx.moveTo(0,top+h*i);cx.lineTo(W,top+h*i);cx.stroke()}
+  keys.forEach((k,i)=>{const y0=top+h*i;panel(y0+h/2,h,k,n,cols[i],ink);const f=F[k];
+    cx.fillStyle=ink;cx.font=`bold ${W/34}px sans-serif`;cx.textAlign='left';cx.fillText(names[i],W*0.66,y0+h*0.3);
+    cx.fillStyle=sub;cx.font=`${W/42}px sans-serif`;cx.fillText(`頂点 ${f[0].toLocaleString()}`,W*0.66,y0+h*0.46);
+    if(n>=2)cx.fillText(`辺 ${f[1].toLocaleString()}`,W*0.66,y0+h*0.58);
+    if(n>=2)cx.fillText(`外側の面 ${f[n-1].toLocaleString()}`,W*0.66,y0+h*0.70)});
+  document.getElementById('read').textContent=`${n}次元：正多胞体 ${COUNT[n]} 個`+(EXTRA[n]?`（${EXTRA[n]}）`:(n>=5?'（この三つだけ）':''));
+  requestAnimationFrame(draw)}
+requestAnimationFrame(draw);
+</script>
